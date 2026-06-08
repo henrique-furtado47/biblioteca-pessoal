@@ -197,16 +197,20 @@ export const booksService = {
     return { id, status }
   },
 
-  /** Catálogo de OBRAS compartilhadas (busca por título/ISBN). */
-  async catalog({ page = 1, pageSize = 24, search = '' } = {}) {
+  /** Catálogo de OBRAS compartilhadas (busca + filtros por autor/gênero/ano). */
+  async catalog({ page = 1, pageSize = 24, search = '', authorId = '', genreId = '', year = '' } = {}) {
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
+    const genres = genreId
+      ? 'genres:book_genres!inner(genre:genres(id, name))'
+      : 'genres:book_genres(genre:genres(id, name))'
     let query = supabase
       .from('books')
-      .select(
-        '*, author:authors(id, name, photo_url), genres:book_genres(genre:genres(id, name))',
-        { count: 'exact' },
-      )
+      .select(`*, author:authors(id, name, photo_url), ${genres}`, { count: 'exact' })
+
+    if (authorId) query = query.eq('author_id', authorId)
+    if (year) query = query.eq('publication_year', year)
+    if (genreId) query = query.eq('genres.genre_id', genreId)
     if (search) {
       const term = `%${search}%`
       query = query.or(`title.ilike.${term},isbn.ilike.${term},subtitle.ilike.${term}`)
@@ -217,6 +221,17 @@ export const booksService = {
     // book_id = id para reuso do BookCard em modo "página da obra"
     const items = (data ?? []).map((b) => ({ ...b, book_id: b.id }))
     return { items, count: count ?? 0 }
+  },
+
+  /** Anos de publicação distintos no catálogo (desc). */
+  async catalogYears() {
+    const { data, error } = await supabase
+      .from('books')
+      .select('publication_year')
+      .not('publication_year', 'is', null)
+    if (error) throw error
+    const unique = [...new Set((data ?? []).map((r) => r.publication_year))]
+    return unique.sort((a, b) => b - a)
   },
 
   /** Uma OBRA do catálogo pelo id. */
