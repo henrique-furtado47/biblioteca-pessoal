@@ -4,8 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books.store'
 import { useAuthorsStore } from '@/stores/authors.store'
 import { booksService } from '@/services/books.service'
-import { genresService } from '@/services/genres.service'
-import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import BookForm from '@/components/books/BookForm.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -14,7 +12,6 @@ const route = useRoute()
 const router = useRouter()
 const books = useBooksStore()
 const authorsStore = useAuthorsStore()
-const auth = useAuthStore()
 const toast = useToast()
 
 const isEdit = computed(() => route.name === 'book-edit')
@@ -28,7 +25,8 @@ onMounted(async () => {
   if (isEdit.value) {
     loading.value = true
     try {
-      const book = await booksService.getById(route.params.id, auth.user.id)
+      const book = await booksService.getById(route.params.id)
+      if (!book) throw new Error('not found')
       authorName.value = book.author?.name || ''
       genreIds.value = (book.genres || []).map((g) => g.genre?.id).filter(Boolean)
       model.value = {
@@ -58,30 +56,58 @@ onMounted(async () => {
   }
 })
 
+function splitPayload(payload) {
+  const meta = {
+    title: payload.title,
+    subtitle: payload.subtitle || null,
+    isbn: payload.isbn || null,
+    publisher: payload.publisher || null,
+    publication_year: payload.publication_year,
+    pages: payload.pages,
+    language: payload.language || null,
+    description: payload.description || null,
+    cover_url: payload.cover_url || null,
+  }
+  const shelf = {
+    status: payload.status,
+    rating: payload.rating,
+    favorite: payload.favorite,
+    review_public: payload.review_public,
+    notes: payload.notes || null,
+    start_date: payload.start_date,
+    finish_date: payload.finish_date,
+  }
+  return { meta, shelf }
+}
+
 async function handleSubmit({ payload, authorName: name, genreIds: selectedGenres }) {
   submitting.value = true
   try {
     // Resolve autor (catálogo global): cria se não existir
-    let author_id = null
+    let authorId = null
     if (name) {
       const author = await authorsStore.findOrCreate(name)
-      author_id = author?.id ?? null
+      authorId = author?.id ?? null
     }
 
+    const { meta, shelf } = splitPayload(payload)
+
     if (isEdit.value) {
-      await books.update(route.params.id, { ...payload, author_id })
-      await genresService.setBookGenres(route.params.id, selectedGenres)
+      await books.update(route.params.id, { meta, authorId, genreIds: selectedGenres, shelf })
       toast.success('Livro atualizado!')
       router.push({ name: 'book-detail', params: { id: route.params.id } })
     } else {
-      const book = await books.create({ ...payload, author_id })
-      await genresService.setBookGenres(book.id, selectedGenres)
+      const entry = await books.create({ meta, authorId, genreIds: selectedGenres, shelf })
       toast.success('Livro adicionado!')
-      router.push({ name: 'book-detail', params: { id: book.id } })
+      router.push({ name: 'book-detail', params: { id: entry.id } })
     }
   } catch (e) {
-    toast.error('Erro ao salvar o livro.')
-    console.error(e)
+    if (e.message === 'DUPLICATE_SHELF') {
+      toast.error('Este livro já está na sua biblioteca.')
+    } else {
+      toast.error('Erro ao salvar o livro.')
+      console.error(e)
+    }
   } finally {
     submitting.value = false
   }
