@@ -45,10 +45,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(email, password, fullName) {
+    async register(email, password, fullName, username) {
       this.loading = true
       try {
-        const data = await authService.signUp(email, password, fullName)
+        const data = await authService.signUp(email, password, fullName, username)
         this.session = data.session
         this.user = data.user
         return data

@@ -37,15 +37,38 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, display_name)
+  insert into public.profiles (id, display_name, username)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1))
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    -- usa o username escolhido no cadastro; se já estiver em uso (corrida), deixa null
+    case
+      when nullif(new.raw_user_meta_data->>'username', '') is not null
+        and not exists (
+          select 1 from public.profiles
+          where lower(username) = lower(new.raw_user_meta_data->>'username')
+        )
+      then lower(new.raw_user_meta_data->>'username')
+      else null
+    end
   )
   on conflict (id) do nothing;
   return new;
 end;
 $$;
+
+-- Checagem pública de disponibilidade de username (usada no cadastro, sem auth).
+create or replace function public.username_available(u text)
+returns boolean
+language sql
+security definer set search_path = public
+as $$
+  select not exists (
+    select 1 from public.profiles where lower(username) = lower(u)
+  );
+$$;
+
+grant execute on function public.username_available(text) to anon, authenticated;
 
 drop trigger if exists trg_on_auth_user_created on auth.users;
 create trigger trg_on_auth_user_created
