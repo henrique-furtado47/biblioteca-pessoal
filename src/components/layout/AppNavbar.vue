@@ -1,0 +1,94 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store'
+import { useToast } from '@/composables/useToast'
+import { initialsOf } from '@/utils/formatters'
+import ThemeToggle from '@/components/ui/ThemeToggle.vue'
+
+defineEmits(['toggle-sidebar'])
+
+const router = useRouter()
+const auth = useAuthStore()
+const toast = useToast()
+
+const search = ref('')
+const menuOpen = ref(false)
+
+function submitSearch() {
+  const q = search.value.trim()
+  router.push({ name: 'books', query: q ? { q } : {} })
+}
+
+async function logout() {
+  try {
+    await auth.logout()
+    toast.success('Sessão encerrada.')
+    router.push({ name: 'login' })
+  } catch {
+    toast.error('Não foi possível sair.')
+  }
+}
+</script>
+
+<template>
+  <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+    <!-- toggle sidebar (mobile) -->
+    <button
+      class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
+      @click="$emit('toggle-sidebar')"
+    >
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+
+    <!-- busca global -->
+    <form class="relative flex-1 max-w-md" @submit.prevent="submitSearch">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+      <input
+        v-model="search"
+        type="search"
+        placeholder="Buscar por título, autor ou ISBN..."
+        class="input-base !rounded-full !py-2 pl-10"
+      />
+    </form>
+
+    <div class="ml-auto flex items-center gap-1.5">
+      <ThemeToggle />
+
+      <!-- avatar / menu -->
+      <div class="relative">
+        <button
+          class="flex items-center gap-2 rounded-full p-1 pr-2 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+          @click="menuOpen = !menuOpen"
+        >
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+            {{ initialsOf(auth.displayName) }}
+          </span>
+          <span class="hidden text-sm font-medium sm:block">{{ auth.displayName }}</span>
+        </button>
+
+        <transition name="fade">
+          <div
+            v-if="menuOpen"
+            class="card absolute right-0 mt-2 w-56 overflow-hidden p-1.5"
+            @click="menuOpen = false"
+          >
+            <div class="px-3 py-2 text-xs text-slate-400">{{ auth.email }}</div>
+            <RouterLink
+              :to="{ name: 'settings' }"
+              class="block rounded-lg px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Configurações
+            </RouterLink>
+            <button
+              class="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950"
+              @click="logout"
+            >
+              Sair
+            </button>
+          </div>
+        </transition>
+      </div>
+    </div>
+  </header>
+</template>
