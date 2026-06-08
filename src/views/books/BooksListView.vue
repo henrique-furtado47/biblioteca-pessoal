@@ -1,9 +1,12 @@
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBooksStore } from '@/stores/books.store'
 import { useAuthorsStore } from '@/stores/authors.store'
+import { useGenresStore } from '@/stores/genres.store'
+import { booksService } from '@/services/books.service'
+import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import BookGrid from '@/components/books/BookGrid.vue'
 import BookFilters from '@/components/books/BookFilters.vue'
@@ -15,12 +18,20 @@ const route = useRoute()
 const router = useRouter()
 const books = useBooksStore()
 const authorsStore = useAuthorsStore()
+const genresStore = useGenresStore()
+const auth = useAuthStore()
 const toast = useToast()
 const { items, loading, filters, page, totalPages, count } = storeToRefs(books)
+const years = ref([])
 
 onMounted(async () => {
   if (route.query.q) books.filters.search = String(route.query.q)
-  await Promise.all([books.fetch(), authorsStore.fetch()])
+  await Promise.all([
+    books.fetch(),
+    authorsStore.fetch(),
+    genresStore.fetch(),
+    booksService.years(auth.user.id).then((y) => (years.value = y)),
+  ])
 })
 
 // Reage à busca global vinda da navbar
@@ -56,6 +67,8 @@ async function onToggleFavorite(book) {
     <BookFilters
       :filters="filters"
       :authors="authorsStore.items"
+      :genres="genresStore.items"
+      :years="years"
       @change="books.setFilter($event)"
       @reset="books.resetFilters()"
     />

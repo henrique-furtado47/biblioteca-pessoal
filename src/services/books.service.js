@@ -15,6 +15,7 @@ export const booksService = {
     search = '',
     status = '',
     authorId = '',
+    genreId = '',
     year = '',
     minRating = '',
     favorite = null,
@@ -24,19 +25,27 @@ export const booksService = {
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
 
+    // Filtrar por gênero exige join interno com a tabela N:N book_genres.
+    const selectStr = genreId
+      ? `${SELECT_WITH_AUTHOR}, book_genres!inner(genre_id)`
+      : SELECT_WITH_AUTHOR
+
     let query = supabase
       .from('books')
-      .select(SELECT_WITH_AUTHOR, { count: 'exact' })
+      .select(selectStr, { count: 'exact' })
       .eq('user_id', userId)
 
     if (status) query = query.eq('status', status)
     if (authorId) query = query.eq('author_id', authorId)
+    if (genreId) query = query.eq('book_genres.genre_id', genreId)
     if (year) query = query.eq('publication_year', year)
     if (minRating) query = query.gte('rating', minRating)
     if (favorite === true) query = query.eq('favorite', true)
     if (search) {
       const term = `%${search}%`
-      query = query.or(`title.ilike.${term},isbn.ilike.${term},subtitle.ilike.${term}`)
+      query = query.or(
+        `title.ilike.${term},isbn.ilike.${term},subtitle.ilike.${term},publisher.ilike.${term},description.ilike.${term}`,
+      )
     }
 
     query = query
@@ -105,6 +114,18 @@ export const booksService = {
       .single()
     if (error) throw error
     return data
+  },
+
+  /** Anos de publicação distintos na coleção do usuário (desc). */
+  async years(userId) {
+    const { data, error } = await supabase
+      .from('books')
+      .select('publication_year')
+      .eq('user_id', userId)
+      .not('publication_year', 'is', null)
+    if (error) throw error
+    const unique = [...new Set((data ?? []).map((r) => r.publication_year))]
+    return unique.sort((a, b) => b - a)
   },
 
   /** Estatísticas agregadas (contagens por status, favoritos, etc.). */
