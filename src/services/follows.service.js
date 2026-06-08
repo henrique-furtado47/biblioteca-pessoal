@@ -29,6 +29,16 @@ export const followsService = {
     return !!data
   },
 
+  /** Ids dos usuários que `userId` segue. */
+  async followingIds(userId) {
+    const { data, error } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId)
+    if (error) throw error
+    return (data ?? []).map((r) => r.following_id)
+  },
+
   /** Contagens de seguidores e seguindo de um usuário. */
   async counts(userId) {
     const [followers, following] = await Promise.all([
