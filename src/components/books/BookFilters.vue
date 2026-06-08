@@ -6,6 +6,8 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 const props = defineProps({
   filters: { type: Object, required: true },
   authors: { type: Array, default: () => [] },
+  genres: { type: Array, default: () => [] },
+  years: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['change', 'reset'])
 
@@ -39,6 +41,24 @@ function update(key, value) {
         placeholder="Todos os autores"
         :options="authors.map((a) => ({ value: a.id, label: a.name }))"
         @update:model-value="(v) => update('authorId', v)"
+      />
+    </div>
+    <div class="min-w-[10rem] flex-1">
+      <BaseSelect
+        :model-value="filters.genreId"
+        label="Gênero"
+        placeholder="Todos os gêneros"
+        :options="genres.map((g) => ({ value: g.id, label: g.name }))"
+        @update:model-value="(v) => update('genreId', v)"
+      />
+    </div>
+    <div class="min-w-[8rem] flex-1">
+      <BaseSelect
+        :model-value="filters.year"
+        label="Ano"
+        placeholder="Todos os anos"
+        :options="years.map((y) => ({ value: y, label: String(y) }))"
+        @update:model-value="(v) => update('year', v)"
       />
     </div>
     <div class="min-w-[8rem] flex-1">
