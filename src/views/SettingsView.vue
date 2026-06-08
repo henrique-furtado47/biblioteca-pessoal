@@ -5,6 +5,7 @@ import { useThemeStore } from '@/stores/ui.store'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ProfileSettings from '@/components/profile/ProfileSettings.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -44,6 +45,9 @@ async function logout() {
         </div>
       </dl>
     </section>
+
+    <!-- Perfil público -->
+    <ProfileSettings />
 
     <!-- Aparência -->
     <section class="card p-6">
