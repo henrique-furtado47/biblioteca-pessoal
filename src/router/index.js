@@ -36,6 +36,7 @@ const routes = [
     children: [
       { path: '', redirect: { name: 'dashboard' } },
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
+      { path: 'feed', name: 'feed', component: () => import('@/views/FeedView.vue') },
       { path: 'catalogo', name: 'catalog', component: () => import('@/views/books/CatalogView.vue') },
       {
         path: 'obra/:id',

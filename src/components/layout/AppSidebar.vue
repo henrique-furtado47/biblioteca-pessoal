@@ -21,6 +21,7 @@ const myProfileTo = computed(() =>
 
 const nav = [
   { to: { name: 'dashboard' }, label: 'Dashboard', icon: 'grid' },
+  { to: { name: 'feed' }, label: 'Feed', icon: 'feed' },
   { to: { name: 'catalog' }, label: 'Livros', icon: 'book' },
   { to: { name: 'books' }, label: 'Meus Livros', icon: 'shelf' },
   { to: { name: 'authors' }, label: 'Autores', icon: 'users' },
@@ -41,6 +42,7 @@ const icons = {
   cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1l-.4-2.5h-3.8L9.6 4a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.4 2.5h3.8l.4-2.5a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z',
   user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z',
   shelf: 'M4 5h16M4 5v14M4 19h16M20 5v14M8 5v14m4-14v14',
+  feed: 'M4 11a9 9 0 019 9M4 4a16 16 0 0116 16M6 19a1 1 0 11-2 0 1 1 0 012 0z',
 }
 </script>
 
