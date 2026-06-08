@@ -27,5 +27,15 @@ export const useAuthorsStore = defineStore('authors', {
       }
       return author
     },
+
+    async update(id, payload) {
+      const updated = await authorsService.update(id, payload)
+      const idx = this.items.findIndex((a) => a.id === id)
+      if (idx !== -1) {
+        this.items[idx] = { ...this.items[idx], ...updated }
+        this.items.sort((a, b) => a.name.localeCompare(b.name))
+      }
+      return updated
+    },
   },
 })
