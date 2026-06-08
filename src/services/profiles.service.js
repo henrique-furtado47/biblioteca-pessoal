@@ -29,6 +29,13 @@ export const profilesService = {
     return data
   },
 
+  /** Disponibilidade de username via RPC pública (funciona sem autenticação, no cadastro). */
+  async isUsernameAvailablePublic(username) {
+    const { data, error } = await supabase.rpc('username_available', { u: username })
+    if (error) throw error
+    return data === true
+  },
+
   /** Verifica se um username está disponível (ignora o próprio usuário). */
   async isUsernameAvailable(username, selfId) {
     const { data, error } = await supabase

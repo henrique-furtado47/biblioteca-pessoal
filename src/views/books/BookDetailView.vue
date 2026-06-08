@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { booksService } from '@/services/books.service'
 import { useBooksStore } from '@/stores/books.store'
@@ -13,6 +13,7 @@ import StarRating from '@/components/ui/StarRating.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import BookReviews from '@/components/books/BookReviews.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,12 +25,15 @@ const confirm = useConfirm()
 const book = ref(null)
 const loading = ref(true)
 
+const isOwner = computed(() => book.value && book.value.user_id === auth.user?.id)
+
 onMounted(load)
 
 async function load() {
   loading.value = true
   try {
-    book.value = await booksService.getById(route.params.id, auth.user.id)
+    book.value = await booksService.getById(route.params.id)
+    if (!book.value) throw new Error('not found')
   } catch {
     toast.error('Livro não encontrado.')
     router.push({ name: 'books' })
@@ -97,14 +101,16 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           </div>
         </div>
 
-        <BaseSelect :model-value="book.status" label="Alterar status" :options="STATUS_OPTIONS" @update:model-value="changeStatus" />
+        <template v-if="isOwner">
+          <BaseSelect :model-value="book.status" label="Alterar status" :options="STATUS_OPTIONS" @update:model-value="changeStatus" />
 
-        <div class="flex gap-2">
-          <BaseButton variant="secondary" block @click="router.push({ name: 'book-edit', params: { id: book.id } })">
-            Editar
-          </BaseButton>
-          <BaseButton variant="danger" @click="remove">Excluir</BaseButton>
-        </div>
+          <div class="flex gap-2">
+            <BaseButton variant="secondary" block @click="router.push({ name: 'book-edit', params: { id: book.id } })">
+              Editar
+            </BaseButton>
+            <BaseButton variant="danger" @click="remove">Excluir</BaseButton>
+          </div>
+        </template>
       </div>
 
       <!-- informações -->
@@ -115,7 +121,7 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
               <h1 class="text-3xl font-bold leading-tight">{{ book.title }}</h1>
               <p v-if="book.subtitle" class="mt-1 text-lg text-slate-500 dark:text-slate-400">{{ book.subtitle }}</p>
             </div>
-            <button class="rounded-full p-2 transition hover:scale-110" :title="book.favorite ? 'Remover favorito' : 'Favoritar'" @click="toggleFavorite">
+            <button v-if="isOwner" class="rounded-full p-2 transition hover:scale-110" :title="book.favorite ? 'Remover favorito' : 'Favoritar'" @click="toggleFavorite">
               <svg class="h-7 w-7" :class="book.favorite ? 'fill-rose-500 text-rose-500' : 'fill-none text-slate-400'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.5-2-4.25-4.2-4.25-1.6 0-3 .9-3.8 2.3C12.2 4.9 10.8 4 9.2 4 7 4 5 5.75 5 8.25c0 4.4 7 9.75 7 9.75s7-5.35 7-9.75z"/></svg>
             </button>
           </div>
@@ -151,12 +157,14 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           <p class="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">{{ book.description }}</p>
         </div>
 
-        <div v-if="book.notes">
+        <div v-if="isOwner && book.notes">
           <h3 class="mb-2 font-semibold">Observações pessoais</h3>
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
             <p class="whitespace-pre-line">{{ book.notes }}</p>
           </div>
         </div>
+
+        <BookReviews v-if="book.book_id" :book-id="book.book_id" hide-when-empty />
       </div>
     </div>
   </div>

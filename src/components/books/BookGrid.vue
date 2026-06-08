@@ -6,6 +6,8 @@ defineProps({
   books: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   skeletonCount: { type: Number, default: 8 },
+  readonly: { type: Boolean, default: false },
+  bookPage: { type: Boolean, default: false },
 })
 defineEmits(['toggle-favorite'])
 </script>
@@ -26,6 +28,8 @@ defineEmits(['toggle-favorite'])
         v-for="book in books"
         :key="book.id"
         :book="book"
+        :readonly="readonly"
+        :book-page="bookPage"
         @toggle-favorite="$emit('toggle-favorite', $event)"
       />
     </template>

@@ -31,6 +31,7 @@ const form = reactive({
   status: 'unread',
   rating: 0,
   favorite: false,
+  review_public: false,
   notes: '',
   cover_url: '',
   start_date: '',
@@ -129,10 +130,19 @@ function submit() {
       <textarea v-model="form.notes" rows="3" class="input-base resize-y" placeholder="Suas anotações..." />
     </div>
 
-    <label class="flex items-center gap-2 text-sm font-medium">
-      <input v-model="form.favorite" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-      Marcar como favorito
-    </label>
+    <div class="space-y-3">
+      <label class="flex items-center gap-2 text-sm font-medium">
+        <input v-model="form.favorite" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+        Marcar como favorito
+      </label>
+      <label class="flex items-start gap-2 text-sm font-medium">
+        <input v-model="form.review_public" type="checkbox" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+        <span>
+          Tornar avaliação pública
+          <span class="block text-xs font-normal text-slate-400">Sua nota e observações deste livro ficam visíveis para outras pessoas na página do livro.</span>
+        </span>
+      </label>
+    </div>
 
     <div class="flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-800">
       <BaseButton variant="secondary" type="button" @click="$emit('cancel')">Cancelar</BaseButton>

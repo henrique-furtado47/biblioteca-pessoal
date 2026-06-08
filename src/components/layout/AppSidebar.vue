@@ -21,7 +21,8 @@ const myProfileTo = computed(() =>
 
 const nav = [
   { to: { name: 'dashboard' }, label: 'Dashboard', icon: 'grid' },
-  { to: { name: 'books' }, label: 'Livros', icon: 'book' },
+  { to: { name: 'catalog' }, label: 'Livros', icon: 'book' },
+  { to: { name: 'books' }, label: 'Meus Livros', icon: 'shelf' },
   { to: { name: 'authors' }, label: 'Autores', icon: 'users' },
   { to: { name: 'wishlist' }, label: 'Lista de Desejos', icon: 'gift' },
   { to: { name: 'favorites' }, label: 'Favoritos', icon: 'heart' },
@@ -39,6 +40,7 @@ const icons = {
   chart: 'M4 19V5m6 14V9m6 10V13m-12 6h16',
   cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1l-.4-2.5h-3.8L9.6 4a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.4 2.5h3.8l.4-2.5a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z',
   user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z',
+  shelf: 'M4 5h16M4 5v14M4 19h16M20 5v14M8 5v14m4-14v14',
 }
 </script>
 

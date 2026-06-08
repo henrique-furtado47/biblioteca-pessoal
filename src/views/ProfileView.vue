@@ -212,7 +212,8 @@ const displayName = computed(
             v-if="booksLoading || books.length"
             :books="books"
             :loading="booksLoading"
-            @toggle-favorite="() => {}"
+            :readonly="!isMe"
+            :book-page="!isMe"
           />
           <EmptyState
             v-else
