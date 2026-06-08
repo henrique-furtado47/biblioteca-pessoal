@@ -43,6 +43,7 @@ onMounted(async () => {
         status: book.status,
         rating: Number(book.rating) || 0,
         favorite: book.favorite,
+        review_public: book.review_public,
         notes: book.notes || '',
         cover_url: book.cover_url || '',
         start_date: book.start_date || '',

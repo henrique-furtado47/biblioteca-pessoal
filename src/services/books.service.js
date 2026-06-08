@@ -116,6 +116,24 @@ export const booksService = {
     return data
   },
 
+  /**
+   * Avaliações públicas de OUTROS usuários para o mesmo livro (mesmo ISBN).
+   * Retorna apenas linhas com review_public = true e nota preenchida.
+   */
+  async publicReviewsByIsbn(isbn, excludeUserId) {
+    if (!isbn) return []
+    const { data, error } = await supabase
+      .from('books')
+      .select('id, user_id, rating, notes, finish_date, status')
+      .eq('isbn', isbn)
+      .eq('review_public', true)
+      .neq('user_id', excludeUserId)
+      .not('rating', 'is', null)
+      .order('finish_date', { ascending: false, nullsFirst: false })
+    if (error) throw error
+    return data ?? []
+  },
+
   /** Anos de publicação distintos na coleção do usuário (desc). */
   async years(userId) {
     const { data, error } = await supabase
