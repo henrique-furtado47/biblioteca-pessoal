@@ -9,6 +9,9 @@ defineEmits(['close'])
 const profileStore = useProfileStore()
 onMounted(() => profileStore.loadMe())
 
+// Injetado pelo Vite (define) a partir do package.json
+const appVersion = __APP_VERSION__
+
 // Se ainda não houver username, leva para Configurações para defini-lo
 const myProfileTo = computed(() =>
   profileStore.username
@@ -23,6 +26,7 @@ const nav = [
   { to: { name: 'wishlist' }, label: 'Lista de Desejos', icon: 'gift' },
   { to: { name: 'favorites' }, label: 'Favoritos', icon: 'heart' },
   { to: { name: 'statistics' }, label: 'Estatísticas', icon: 'chart' },
+  { to: { name: 'community' }, label: 'Comunidade', icon: 'users' },
   { to: { name: 'settings' }, label: 'Configurações', icon: 'cog' },
 ]
 
@@ -84,7 +88,7 @@ const icons = {
     </nav>
 
     <div class="border-t border-slate-200 p-4 text-xs text-slate-400 dark:border-slate-800">
-      Minha Biblioteca · v1.0
+      Minha Biblioteca · v{{ appVersion }}
     </div>
   </aside>
 </template>

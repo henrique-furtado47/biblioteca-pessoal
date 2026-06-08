@@ -40,6 +40,17 @@ export const profilesService = {
     return !data || data.id === selfId
   },
 
+  /** Resolve uma lista de perfis a partir de ids. */
+  async getByIds(ids) {
+    if (!ids.length) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .in('id', ids)
+    if (error) throw error
+    return data ?? []
+  },
+
   /** Busca usuários por nome ou username. */
   async search(term, limit = 20) {
     const like = `%${term}%`
