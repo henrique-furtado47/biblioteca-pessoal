@@ -78,7 +78,7 @@ src/
 - [x] **Fase 1** — Autenticação (login, cadastro, recuperação, logout) · rotas protegidas · CRUD de livros · upload de capa · avaliação por estrelas · Dashboard · Favoritos · Lista de Desejos · tema claro/escuro · toasts, modais, skeletons, paginação, empty states · integração Open Library por ISBN
 - [x] **Fase 2** — Gestão completa de Autores (biografia/foto, página de detalhe) · associação de Gêneros aos livros
 - [x] **Fase 3** — Filtros avançados (gênero, ano) e busca ampliada (título, ISBN, subtítulo, editora, descrição)
-- [ ] **Fase 4** — Estatísticas com Chart.js (por ano/mês/gênero/status, páginas lidas, autores mais lidos)
+- [x] **Fase 4** — Estatísticas com Chart.js (por status, livros lidos por ano, gêneros e autores mais lidos, páginas lidas, nota média)
 - [ ] **Fase 5** — Social: perfis públicos, seguir + amizades, feed de atividades e avaliações de amigos
 
 > Observação: a integração Open Library e o tema já foram adiantados na Fase 1.
