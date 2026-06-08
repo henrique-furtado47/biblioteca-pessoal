@@ -36,6 +36,12 @@ const routes = [
     children: [
       { path: '', redirect: { name: 'dashboard' } },
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
+      { path: 'catalogo', name: 'catalog', component: () => import('@/views/books/CatalogView.vue') },
+      {
+        path: 'obra/:id',
+        name: 'book-page',
+        component: () => import('@/views/books/BookPageView.vue'),
+      },
       { path: 'livros', name: 'books', component: () => import('@/views/books/BooksListView.vue') },
       {
         path: 'livros/novo',
