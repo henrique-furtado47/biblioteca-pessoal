@@ -19,6 +19,8 @@ const book = ref(null)
 const myEntry = ref(null)
 const loading = ref(true)
 const adding = ref(false)
+const tab = ref('about')
+const reviewCount = ref(0)
 
 onMounted(load)
 
@@ -122,12 +124,37 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           <div><dt class="text-xs text-slate-400">Idioma</dt><dd class="text-sm font-medium">{{ book.language || '—' }}</dd></div>
         </div>
 
-        <div v-if="book.description">
-          <h3 class="mb-2 font-semibold">Descrição</h3>
-          <p class="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">{{ book.description }}</p>
-        </div>
+        <!-- abas -->
+        <div>
+          <div class="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+            <button
+              class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+              :class="tab === 'about' ? 'border-brand-600 text-brand-700 dark:text-brand-300' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+              @click="tab = 'about'"
+            >
+              Sobre
+            </button>
+            <button
+              class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+              :class="tab === 'reviews' ? 'border-brand-600 text-brand-700 dark:text-brand-300' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+              @click="tab = 'reviews'"
+            >
+              Avaliações<span v-if="reviewCount"> ({{ reviewCount }})</span>
+            </button>
+          </div>
 
-        <BookReviews :book-id="book.id" />
+          <div class="pt-5">
+            <div v-show="tab === 'about'">
+              <p v-if="book.description" class="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                {{ book.description }}
+              </p>
+              <p v-else class="text-sm text-slate-400">Sem descrição cadastrada.</p>
+            </div>
+            <div v-show="tab === 'reviews'">
+              <BookReviews :book-id="book.id" :show-heading="false" @count="reviewCount = $event" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

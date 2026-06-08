@@ -164,7 +164,7 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           </div>
         </div>
 
-        <BookReviews v-if="book.book_id" :book-id="book.book_id" />
+        <BookReviews v-if="book.book_id" :book-id="book.book_id" hide-when-empty />
       </div>
     </div>
   </div>
