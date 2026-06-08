@@ -2,11 +2,13 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { booksService } from '@/services/books.service'
+import { profilesService } from '@/services/profiles.service'
+import { friendshipsService } from '@/services/friendships.service'
 import { useBooksStore } from '@/stores/books.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
-import { formatDate } from '@/utils/formatters'
+import { formatDate, initialsOf } from '@/utils/formatters'
 import { STATUS_OPTIONS } from '@/constants'
 import StatusBadge from '@/components/books/StatusBadge.vue'
 import StarRating from '@/components/ui/StarRating.vue'
@@ -24,6 +26,9 @@ const confirm = useConfirm()
 const book = ref(null)
 const loading = ref(true)
 
+const friendReviews = ref([])
+const communityReviews = ref([])
+
 onMounted(load)
 
 async function load() {
@@ -33,10 +38,37 @@ async function load() {
   } catch {
     toast.error('Livro não encontrado.')
     router.push({ name: 'books' })
+    return
   } finally {
     loading.value = false
   }
+  loadReviews()
 }
+
+async function loadReviews() {
+  friendReviews.value = []
+  communityReviews.value = []
+  if (!book.value?.isbn) return
+  try {
+    const rows = await booksService.publicReviewsByIsbn(book.value.isbn, auth.user.id)
+    if (!rows.length) return
+    const [profiles, friends] = await Promise.all([
+      profilesService.getByIds(rows.map((r) => r.user_id)),
+      friendshipsService.listFriends(auth.user.id),
+    ])
+    const pMap = Object.fromEntries(profiles.map((p) => [p.id, p]))
+    const friendIds = new Set(friends.map((f) => f.id))
+    const enriched = rows
+      .map((r) => ({ ...r, profile: pMap[r.user_id] }))
+      .filter((r) => r.profile)
+    friendReviews.value = enriched.filter((r) => friendIds.has(r.user_id))
+    communityReviews.value = enriched.filter((r) => !friendIds.has(r.user_id))
+  } catch {
+    /* avaliações são complementares; silenciar falhas */
+  }
+}
+
+const reviewName = (r) => r.profile?.display_name || r.profile?.username || 'Usuário'
 
 async function toggleFavorite() {
   const updated = await booksService.setFavorite(book.value.id, !book.value.favorite)
@@ -156,6 +188,52 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
             <p class="whitespace-pre-line">{{ book.notes }}</p>
           </div>
+        </div>
+
+        <!-- Avaliações de amigos -->
+        <div v-if="friendReviews.length">
+          <h3 class="mb-2 font-semibold">Avaliações de amigos</h3>
+          <ul class="space-y-3">
+            <li v-for="r in friendReviews" :key="r.id" class="card p-4">
+              <div class="flex items-center gap-3">
+                <RouterLink
+                  :to="r.profile.username ? { name: 'profile', params: { username: r.profile.username } } : {}"
+                  class="flex min-w-0 items-center gap-2"
+                >
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-xs font-semibold text-white">
+                    <img v-if="r.profile.avatar_url" :src="r.profile.avatar_url" :alt="reviewName(r)" class="h-full w-full object-cover" />
+                    <template v-else>{{ initialsOf(reviewName(r)) }}</template>
+                  </span>
+                  <span class="truncate text-sm font-medium">{{ reviewName(r) }}</span>
+                </RouterLink>
+                <StarRating :model-value="Number(r.rating)" readonly class="ml-auto" />
+              </div>
+              <p v-if="r.notes" class="mt-2 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{{ r.notes }}</p>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Avaliações da comunidade -->
+        <div v-if="communityReviews.length">
+          <h3 class="mb-2 font-semibold">Avaliações da comunidade</h3>
+          <ul class="space-y-3">
+            <li v-for="r in communityReviews" :key="r.id" class="card p-4">
+              <div class="flex items-center gap-3">
+                <RouterLink
+                  :to="r.profile.username ? { name: 'profile', params: { username: r.profile.username } } : {}"
+                  class="flex min-w-0 items-center gap-2"
+                >
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-xs font-semibold text-white">
+                    <img v-if="r.profile.avatar_url" :src="r.profile.avatar_url" :alt="reviewName(r)" class="h-full w-full object-cover" />
+                    <template v-else>{{ initialsOf(reviewName(r)) }}</template>
+                  </span>
+                  <span class="truncate text-sm font-medium">{{ reviewName(r) }}</span>
+                </RouterLink>
+                <StarRating :model-value="Number(r.rating)" readonly class="ml-auto" />
+              </div>
+              <p v-if="r.notes" class="mt-2 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{{ r.notes }}</p>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
