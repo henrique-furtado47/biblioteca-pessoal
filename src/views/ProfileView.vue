@@ -3,6 +3,7 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { profilesService } from '@/services/profiles.service'
 import { followsService } from '@/services/follows.service'
+import { friendshipsService } from '@/services/friendships.service'
 import { booksService } from '@/services/books.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
@@ -24,6 +25,8 @@ const booksLoading = ref(false)
 const counts = ref({ followers: 0, following: 0 })
 const isFollowing = ref(false)
 const followBusy = ref(false)
+const friendStatus = ref('none') // none | pending_outgoing | pending_incoming | friends
+const friendBusy = ref(false)
 
 const isMe = computed(() => profile.value && profile.value.id === auth.user?.id)
 
@@ -58,7 +61,10 @@ async function load() {
     profile.value = p
     counts.value = await followsService.counts(p.id)
     if (!isMe.value) {
-      isFollowing.value = await followsService.isFollowing(auth.user.id, p.id)
+      ;[isFollowing.value, friendStatus.value] = await Promise.all([
+        followsService.isFollowing(auth.user.id, p.id),
+        friendshipsService.getStatus(auth.user.id, p.id),
+      ])
     }
   } catch {
     toast.error('Erro ao carregar o perfil.')
@@ -104,6 +110,39 @@ async function toggleFollow() {
   }
 }
 
+async function friendAction() {
+  friendBusy.value = true
+  const me = auth.user.id
+  const other = profile.value.id
+  try {
+    if (friendStatus.value === 'none') {
+      await friendshipsService.sendRequest(me, other)
+      friendStatus.value = 'pending_outgoing'
+    } else if (friendStatus.value === 'pending_incoming') {
+      await friendshipsService.accept(me, other)
+      friendStatus.value = 'friends'
+    } else {
+      // pending_outgoing (cancelar) ou friends (desfazer)
+      await friendshipsService.remove(me, other)
+      friendStatus.value = 'none'
+    }
+  } catch {
+    toast.error('Não foi possível atualizar a amizade.')
+  } finally {
+    friendBusy.value = false
+  }
+}
+
+const friendLabel = computed(
+  () =>
+    ({
+      none: 'Adicionar amigo',
+      pending_outgoing: 'Pedido enviado',
+      pending_incoming: 'Aceitar pedido',
+      friends: 'Amigos ✓',
+    })[friendStatus.value],
+)
+
 const displayName = computed(
   () => profile.value?.display_name || profile.value?.username || 'Usuário',
 )
@@ -141,14 +180,22 @@ const displayName = computed(
         <BaseButton v-if="isMe" variant="secondary" @click="router.push({ name: 'settings' })">
           Editar perfil
         </BaseButton>
-        <BaseButton
-          v-else
-          :variant="isFollowing ? 'secondary' : 'primary'"
-          :loading="followBusy"
-          @click="toggleFollow"
-        >
-          {{ isFollowing ? 'Seguindo' : 'Seguir' }}
-        </BaseButton>
+        <div v-else class="flex gap-2">
+          <BaseButton
+            :variant="isFollowing ? 'secondary' : 'primary'"
+            :loading="followBusy"
+            @click="toggleFollow"
+          >
+            {{ isFollowing ? 'Seguindo' : 'Seguir' }}
+          </BaseButton>
+          <BaseButton
+            :variant="friendStatus === 'pending_incoming' ? 'primary' : 'secondary'"
+            :loading="friendBusy"
+            @click="friendAction"
+          >
+            {{ friendLabel }}
+          </BaseButton>
+        </div>
       </div>
 
       <!-- bio -->
