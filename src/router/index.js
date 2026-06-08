@@ -53,6 +53,11 @@ const routes = [
         component: () => import('@/views/books/BookFormView.vue'),
       },
       { path: 'autores', name: 'authors', component: () => import('@/views/AuthorsView.vue') },
+      {
+        path: 'autores/:id',
+        name: 'author-detail',
+        component: () => import('@/views/AuthorDetailView.vue'),
+      },
       { path: 'desejos', name: 'wishlist', component: () => import('@/views/WishlistView.vue') },
       { path: 'favoritos', name: 'favorites', component: () => import('@/views/FavoritesView.vue') },
       {
