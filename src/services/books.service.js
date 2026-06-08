@@ -132,7 +132,9 @@ export const booksService = {
   async stats(userId) {
     const { data, error } = await supabase
       .from('books')
-      .select('status, favorite, pages, rating, finish_date, author_id')
+      .select(
+        'status, favorite, pages, rating, finish_date, publication_year, author:authors(id, name), genres:book_genres(genre:genres(id, name))',
+      )
       .eq('user_id', userId)
     if (error) throw error
     return data ?? []
