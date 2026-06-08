@@ -7,10 +7,12 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import StarRating from '@/components/ui/StarRating.vue'
 import CoverUpload from './CoverUpload.vue'
 import IsbnLookup from './IsbnLookup.vue'
+import GenreSelect from './GenreSelect.vue'
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
   authorName: { type: String, default: '' }, // nome do autor (texto livre)
+  genreIds: { type: Array, default: () => [] }, // ids dos gêneros associados
   submitting: { type: Boolean, default: false },
   isEdit: { type: Boolean, default: false },
 })
@@ -36,6 +38,7 @@ const form = reactive({
   ...props.modelValue,
 })
 const authorNameLocal = ref(props.authorName)
+const genreIdsLocal = ref([...props.genreIds])
 const errors = ref({})
 
 function applyFromOpenLibrary(data) {
@@ -64,7 +67,11 @@ function submit() {
     start_date: form.start_date || null,
     finish_date: form.finish_date || null,
   }
-  emit('submit', { payload, authorName: authorNameLocal.value.trim() })
+  emit('submit', {
+    payload,
+    authorName: authorNameLocal.value.trim(),
+    genreIds: [...genreIdsLocal.value],
+  })
 }
 </script>
 
@@ -101,6 +108,8 @@ function submit() {
       <label class="label-base">Descrição</label>
       <textarea v-model="form.description" rows="4" class="input-base resize-y" placeholder="Sinopse do livro..." />
     </div>
+
+    <GenreSelect v-model="genreIdsLocal" />
 
     <div class="grid gap-4 sm:grid-cols-2">
       <BaseSelect v-model="form.status" label="Status" :options="STATUS_OPTIONS" />

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books.store'
 import { useAuthorsStore } from '@/stores/authors.store'
 import { booksService } from '@/services/books.service'
+import { genresService } from '@/services/genres.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import BookForm from '@/components/books/BookForm.vue'
@@ -21,6 +22,7 @@ const submitting = ref(false)
 const loading = ref(false)
 const model = ref({})
 const authorName = ref('')
+const genreIds = ref([])
 
 onMounted(async () => {
   if (isEdit.value) {
@@ -28,6 +30,7 @@ onMounted(async () => {
     try {
       const book = await booksService.getById(route.params.id, auth.user.id)
       authorName.value = book.author?.name || ''
+      genreIds.value = (book.genres || []).map((g) => g.genre?.id).filter(Boolean)
       model.value = {
         title: book.title,
         subtitle: book.subtitle || '',
@@ -54,7 +57,7 @@ onMounted(async () => {
   }
 })
 
-async function handleSubmit({ payload, authorName: name }) {
+async function handleSubmit({ payload, authorName: name, genreIds: selectedGenres }) {
   submitting.value = true
   try {
     // Resolve autor (catálogo global): cria se não existir
@@ -66,10 +69,12 @@ async function handleSubmit({ payload, authorName: name }) {
 
     if (isEdit.value) {
       await books.update(route.params.id, { ...payload, author_id })
+      await genresService.setBookGenres(route.params.id, selectedGenres)
       toast.success('Livro atualizado!')
       router.push({ name: 'book-detail', params: { id: route.params.id } })
     } else {
       const book = await books.create({ ...payload, author_id })
+      await genresService.setBookGenres(book.id, selectedGenres)
       toast.success('Livro adicionado!')
       router.push({ name: 'book-detail', params: { id: book.id } })
     }
@@ -101,6 +106,7 @@ async function handleSubmit({ payload, authorName: name }) {
         v-else
         :model-value="model"
         :author-name="authorName"
+        :genre-ids="genreIds"
         :is-edit="isEdit"
         :submitting="submitting"
         @submit="handleSubmit"
