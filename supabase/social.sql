@@ -127,44 +127,23 @@ create policy "follows_delete_own" on public.follows
   for delete using (follower_id = auth.uid());
 
 -- ----------------------------------------------------------------------------
---  Abertura condicional da biblioteca de outros usuários
---  (policies SELECT adicionais — permissivas, somadas às *_select_own)
+--  Abertura condicional da ESTANTE de outros usuários (user_books)
+--  As OBRAS (books) e gêneros já são catálogo público; o que é privado é a
+--  estante de cada um (status, nota, etc.). Policy permissiva, somada à _own.
 -- ----------------------------------------------------------------------------
-drop policy if exists "books_select_public" on public.books;
-create policy "books_select_public" on public.books
+drop policy if exists "user_books_select_visible" on public.user_books;
+create policy "user_books_select_visible" on public.user_books
   for select using (
     exists (
       select 1 from public.profiles p
-      where p.id = books.user_id
+      where p.id = user_books.user_id
         and (
           p.library_visibility = 'public'
           or (
             p.library_visibility = 'followers'
             and exists (
               select 1 from public.follows f
-              where f.following_id = books.user_id and f.follower_id = auth.uid()
-            )
-          )
-        )
-    )
-  );
-
--- Gêneros dos livros visíveis também ficam legíveis
-drop policy if exists "book_genres_select_public" on public.book_genres;
-create policy "book_genres_select_public" on public.book_genres
-  for select using (
-    exists (
-      select 1
-      from public.books b
-      join public.profiles p on p.id = b.user_id
-      where b.id = book_genres.book_id
-        and (
-          p.library_visibility = 'public'
-          or (
-            p.library_visibility = 'followers'
-            and exists (
-              select 1 from public.follows f
-              where f.following_id = b.user_id and f.follower_id = auth.uid()
+              where f.following_id = user_books.user_id and f.follower_id = auth.uid()
             )
           )
         )
