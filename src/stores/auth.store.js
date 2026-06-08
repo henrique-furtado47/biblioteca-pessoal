@@ -61,6 +61,8 @@ export const useAuthStore = defineStore('auth', {
       await authService.signOut()
       this.user = null
       this.session = null
+      const { useProfileStore } = await import('./profile.store')
+      useProfileStore().reset()
     },
 
     async sendPasswordReset(email) {

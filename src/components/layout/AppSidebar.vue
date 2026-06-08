@@ -1,8 +1,20 @@
 <script setup>
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useProfileStore } from '@/stores/profile.store'
 
 defineProps({ open: { type: Boolean, default: false } })
 defineEmits(['close'])
+
+const profileStore = useProfileStore()
+onMounted(() => profileStore.loadMe())
+
+// Se ainda não houver username, leva para Configurações para defini-lo
+const myProfileTo = computed(() =>
+  profileStore.username
+    ? { name: 'profile', params: { username: profileStore.username } }
+    : { name: 'settings' },
+)
 
 const nav = [
   { to: { name: 'dashboard' }, label: 'Dashboard', icon: 'grid' },
@@ -22,6 +34,7 @@ const icons = {
   heart: 'M21 8.25c0-2.5-2-4.25-4.2-4.25-1.6 0-3 .9-3.8 2.3C12.2 4.9 10.8 4 9.2 4 7 4 5 5.75 5 8.25c0 4.4 7 9.75 7 9.75s7-5.35 7-9.75z',
   chart: 'M4 19V5m6 14V9m6 10V13m-12 6h16',
   cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1l-.4-2.5h-3.8L9.6 4a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.4 2.5h3.8l.4-2.5a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z',
+  user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z',
 }
 </script>
 
@@ -55,6 +68,18 @@ const icons = {
           <path stroke-linecap="round" stroke-linejoin="round" :d="icons[item.icon]" />
         </svg>
         {{ item.label }}
+      </RouterLink>
+
+      <RouterLink
+        :to="myProfileTo"
+        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        active-class="!bg-brand-50 !text-brand-700 dark:!bg-brand-900/30 dark:!text-brand-200"
+        @click="$emit('close')"
+      >
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" :d="icons.user" />
+        </svg>
+        Meu Perfil
       </RouterLink>
     </nav>
 
