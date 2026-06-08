@@ -74,14 +74,13 @@ export const useBooksStore = defineStore('books', {
       return this.fetch()
     },
 
-    async create(payload) {
+    async create({ meta, authorId, genreIds, shelf }) {
       const userId = this._userId()
-      const book = await booksService.create({ ...payload, user_id: userId })
-      return book
+      return booksService.addToShelf({ userId, meta, authorId, genreIds, shelf })
     },
 
-    async update(id, payload) {
-      return booksService.update(id, payload)
+    async update(id, args) {
+      return booksService.update(id, args)
     },
 
     async remove(id) {
