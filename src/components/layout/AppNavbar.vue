@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import { useProfileStore } from '@/stores/profile.store'
 import { useToast } from '@/composables/useToast'
 import { initialsOf } from '@/utils/formatters'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -10,10 +11,21 @@ defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
 const auth = useAuthStore()
+const profileStore = useProfileStore()
 const toast = useToast()
 
 const search = ref('')
 const menuOpen = ref(false)
+
+onMounted(() => profileStore.loadMe())
+
+const displayName = computed(() => profileStore.me?.display_name || auth.displayName)
+const avatarUrl = computed(() => profileStore.me?.avatar_url || '')
+const myProfileTo = computed(() =>
+  profileStore.username
+    ? { name: 'profile', params: { username: profileStore.username } }
+    : { name: 'settings' },
+)
 
 function submitSearch() {
   const q = search.value.trim()
@@ -61,10 +73,11 @@ async function logout() {
           class="flex items-center gap-2 rounded-full p-1 pr-2 transition hover:bg-slate-100 dark:hover:bg-slate-800"
           @click="menuOpen = !menuOpen"
         >
-          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
-            {{ initialsOf(auth.displayName) }}
+          <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-sm font-semibold text-white">
+            <img v-if="avatarUrl" :src="avatarUrl" :alt="displayName" class="h-full w-full object-cover" />
+            <template v-else>{{ initialsOf(displayName) }}</template>
           </span>
-          <span class="hidden text-sm font-medium sm:block">{{ auth.displayName }}</span>
+          <span class="hidden text-sm font-medium sm:block">{{ displayName }}</span>
         </button>
 
         <transition name="fade">
@@ -74,6 +87,12 @@ async function logout() {
             @click="menuOpen = false"
           >
             <div class="px-3 py-2 text-xs text-slate-400">{{ auth.email }}</div>
+            <RouterLink
+              :to="myProfileTo"
+              class="block rounded-lg px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Meu Perfil
+            </RouterLink>
             <RouterLink
               :to="{ name: 'settings' }"
               class="block rounded-lg px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
