@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { useGenresStore } from '@/stores/genres.store'
 import { STATUS_OPTIONS, LANGUAGE_OPTIONS } from '@/constants'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
@@ -42,7 +43,59 @@ const authorNameLocal = ref(props.authorName)
 const genreIdsLocal = ref([...props.genreIds])
 const errors = ref({})
 
-function applyFromOpenLibrary(data) {
+const genresStore = useGenresStore()
+onMounted(() => genresStore.fetch())
+
+// Dicas para mapear categorias (em inglês) das APIs para nossos gêneros (pt-BR)
+const CATEGORY_HINTS = {
+  fiction: 'Ficção',
+  nonfiction: 'Não-ficção',
+  'non-fiction': 'Não-ficção',
+  fantasy: 'Fantasia',
+  'science fiction': 'Ficção Científica',
+  romance: 'Romance',
+  thriller: 'Suspense',
+  suspense: 'Suspense',
+  mystery: 'Suspense',
+  horror: 'Terror',
+  biography: 'Biografia',
+  autobiography: 'Biografia',
+  history: 'História',
+  'self-help': 'Autoajuda',
+  technology: 'Tecnologia',
+  computers: 'Tecnologia',
+  business: 'Negócios',
+  poetry: 'Poesia',
+  juvenile: 'Infantil',
+  philosophy: 'Filosofia',
+  psychology: 'Psicologia',
+  religion: 'Religião',
+  comics: 'Quadrinhos',
+}
+
+/** Tenta casar categorias retornadas com os gêneros do catálogo. */
+function matchGenreIds(categories = []) {
+  const genres = genresStore.items
+  const ids = new Set(genreIdsLocal.value)
+  for (const cat of categories) {
+    const lc = String(cat).toLowerCase()
+    // casamento direto com nomes dos nossos gêneros
+    for (const g of genres) {
+      const gn = g.name.toLowerCase()
+      if (lc.includes(gn) || gn.includes(lc)) ids.add(g.id)
+    }
+    // casamento por dicas (inglês)
+    for (const [key, gname] of Object.entries(CATEGORY_HINTS)) {
+      if (lc.includes(key)) {
+        const g = genres.find((x) => x.name === gname)
+        if (g) ids.add(g.id)
+      }
+    }
+  }
+  return [...ids]
+}
+
+function applyLookup(data) {
   if (data.title) form.title = data.title
   if (data.subtitle) form.subtitle = data.subtitle
   if (data.isbn) form.isbn = data.isbn
@@ -51,7 +104,9 @@ function applyFromOpenLibrary(data) {
   if (data.pages) form.pages = data.pages
   if (data.cover_url) form.cover_url = data.cover_url
   if (data.description) form.description = data.description
+  if (data.language) form.language = data.language
   if (data.author) authorNameLocal.value = data.author
+  if (data.categories?.length) genreIdsLocal.value = matchGenreIds(data.categories)
 }
 
 function submit() {
@@ -78,7 +133,7 @@ function submit() {
 
 <template>
   <form class="space-y-6" @submit.prevent="submit">
-    <IsbnLookup v-if="!isEdit" @found="applyFromOpenLibrary" />
+    <IsbnLookup v-if="!isEdit" @found="applyLookup" />
 
     <div class="grid gap-6 md:grid-cols-3">
       <!-- coluna capa -->
