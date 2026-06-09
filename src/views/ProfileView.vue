@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { initialsOf } from '@/utils/formatters'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
 import BookGrid from '@/components/books/BookGrid.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -27,6 +28,35 @@ const isFollowing = ref(false)
 const followBusy = ref(false)
 const friendStatus = ref('none') // none | pending_outgoing | pending_incoming | friends
 const friendBusy = ref(false)
+
+// Modal de seguidores / seguindo
+const listOpen = ref(false)
+const listType = ref('followers')
+const listItems = ref([])
+const listLoading = ref(false)
+
+async function openList(type) {
+  listType.value = type
+  listOpen.value = true
+  listLoading.value = true
+  listItems.value = []
+  try {
+    listItems.value =
+      type === 'followers'
+        ? await followsService.followersList(profile.value.id)
+        : await followsService.followingList(profile.value.id)
+  } finally {
+    listLoading.value = false
+  }
+}
+
+function goToProfile(p) {
+  if (!p.username) return
+  listOpen.value = false
+  router.push({ name: 'profile', params: { username: p.username } })
+}
+
+const listName = (p) => p.display_name || p.username || 'Usuário'
 
 const isMe = computed(() => profile.value && profile.value.id === auth.user?.id)
 
@@ -171,8 +201,12 @@ const displayName = computed(
             <h1 class="text-3xl font-bold leading-tight">{{ displayName }}</h1>
             <p v-if="profile.username" class="text-sm text-slate-500 dark:text-slate-400">@{{ profile.username }}</p>
             <div class="mt-2 flex gap-4 text-sm">
-              <span><strong>{{ counts.followers }}</strong> <span class="text-slate-500 dark:text-slate-400">seguidores</span></span>
-              <span><strong>{{ counts.following }}</strong> <span class="text-slate-500 dark:text-slate-400">seguindo</span></span>
+              <button class="hover:text-brand-600" @click="openList('followers')">
+                <strong>{{ counts.followers }}</strong> <span class="text-slate-500 dark:text-slate-400">seguidores</span>
+              </button>
+              <button class="hover:text-brand-600" @click="openList('following')">
+                <strong>{{ counts.following }}</strong> <span class="text-slate-500 dark:text-slate-400">seguindo</span>
+              </button>
             </div>
           </div>
         </div>
@@ -232,5 +266,30 @@ const displayName = computed(
         </div>
       </div>
     </template>
+
+    <!-- modal de seguidores / seguindo -->
+    <BaseModal v-model="listOpen" :title="listType === 'followers' ? 'Seguidores' : 'Seguindo'">
+      <p v-if="listLoading" class="text-sm text-slate-400">Carregando...</p>
+      <ul v-else-if="listItems.length" class="space-y-1">
+        <li v-for="p in listItems" :key="p.id">
+          <button
+            class="flex w-full items-center gap-3 rounded-lg p-2 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            @click="goToProfile(p)"
+          >
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-xs font-semibold text-white">
+              <img v-if="p.avatar_url" :src="p.avatar_url" :alt="listName(p)" class="h-full w-full object-cover" />
+              <template v-else>{{ initialsOf(listName(p)) }}</template>
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium">{{ listName(p) }}</span>
+              <span v-if="p.username" class="block truncate text-xs text-slate-500 dark:text-slate-400">@{{ p.username }}</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+      <p v-else class="py-6 text-center text-sm text-slate-400">
+        {{ listType === 'followers' ? 'Nenhum seguidor ainda.' : 'Não está seguindo ninguém ainda.' }}
+      </p>
+    </BaseModal>
   </div>
 </template>
