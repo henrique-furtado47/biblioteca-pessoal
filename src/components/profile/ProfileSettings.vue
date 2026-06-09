@@ -75,8 +75,8 @@ async function save() {
   errors.value = {}
   const username = form.username.trim().toLowerCase()
 
-  if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-    errors.value.username = 'Use 3 a 20 caracteres: letras minúsculas, números ou _.'
+  if (!/^[a-z0-9._]{3,20}$/.test(username)) {
+    errors.value.username = 'Use 3 a 20 caracteres: letras minúsculas, números, ponto ou _.'
     return
   }
 
@@ -147,7 +147,7 @@ async function save() {
         label="Nome de usuário"
         placeholder="seu_usuario"
         :error="errors.username"
-        hint="Usado no link do seu perfil. Apenas letras minúsculas, números e _."
+        hint="Usado no link do seu perfil. Apenas letras minúsculas, números, ponto e _."
         required
       />
       <BaseInput v-model="form.display_name" label="Nome de exibição" placeholder="Seu nome" />
