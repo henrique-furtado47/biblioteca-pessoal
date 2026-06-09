@@ -75,6 +75,13 @@ const visibilityMessage = computed(() => {
     : 'Esta biblioteca é privada.'
 })
 
+// Agrupa a estante: lendo primeiro, depois biblioteca, e desejos à parte
+const reading = computed(() => books.value.filter((b) => b.status === 'reading'))
+const wishlist = computed(() => books.value.filter((b) => b.status === 'wishlist'))
+const library = computed(() =>
+  books.value.filter((b) => b.status !== 'reading' && b.status !== 'wishlist'),
+)
+
 onMounted(load)
 watch(() => route.params.username, load)
 
@@ -239,16 +246,27 @@ const displayName = computed(
 
       <!-- biblioteca -->
       <div class="mt-8">
-        <h2 class="mb-3 font-semibold">Biblioteca</h2>
-
         <template v-if="canSeeLibrary">
-          <BookGrid
-            v-if="booksLoading || books.length"
-            :books="books"
-            :loading="booksLoading"
-            :readonly="!isMe"
-            :book-page="!isMe"
-          />
+          <!-- carregando -->
+          <BookGrid v-if="booksLoading" :books="[]" loading :readonly="!isMe" />
+
+          <template v-else-if="books.length">
+            <section v-if="reading.length" class="mb-8">
+              <h2 class="mb-3 font-semibold">Lendo agora</h2>
+              <BookGrid :books="reading" :readonly="!isMe" :book-page="!isMe" />
+            </section>
+
+            <section v-if="library.length" class="mb-8">
+              <h2 class="mb-3 font-semibold">Biblioteca</h2>
+              <BookGrid :books="library" :readonly="!isMe" :book-page="!isMe" />
+            </section>
+
+            <section v-if="wishlist.length">
+              <h2 class="mb-3 font-semibold">Lista de desejos</h2>
+              <BookGrid :books="wishlist" :readonly="!isMe" :book-page="!isMe" />
+            </section>
+          </template>
+
           <EmptyState
             v-else
             icon="book"
