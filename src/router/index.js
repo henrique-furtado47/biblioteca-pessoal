@@ -8,6 +8,7 @@ const routes = [
     component: () => import('@/layouts/AuthLayout.vue'),
     meta: { guestOnly: true },
     children: [
+      { path: '', redirect: { name: 'login' } },
       { path: 'login', name: 'login', component: () => import('@/views/auth/LoginView.vue') },
       {
         path: 'cadastro',
