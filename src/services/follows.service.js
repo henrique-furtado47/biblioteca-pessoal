@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { profilesService } from './profiles.service'
 
 export const followsService = {
   async follow(followerId, followingId) {
@@ -37,6 +38,22 @@ export const followsService = {
       .eq('follower_id', userId)
     if (error) throw error
     return (data ?? []).map((r) => r.following_id)
+  },
+
+  /** Perfis que seguem `userId`. */
+  async followersList(userId) {
+    const { data, error } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('following_id', userId)
+    if (error) throw error
+    return profilesService.getByIds((data ?? []).map((r) => r.follower_id))
+  },
+
+  /** Perfis que `userId` segue. */
+  async followingList(userId) {
+    const ids = await this.followingIds(userId)
+    return profilesService.getByIds(ids)
   },
 
   /** Contagens de seguidores e seguindo de um usuário. */
