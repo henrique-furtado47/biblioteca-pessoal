@@ -27,7 +27,14 @@ async function submit() {
     toast.success('Bem-vindo de volta!')
     router.push(route.query.redirect || { name: 'dashboard' })
   } catch (e) {
-    toast.error(e.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : 'Falha no login.')
+    const msg = e.message || ''
+    if (msg === 'Invalid login credentials') {
+      toast.error('E-mail ou senha incorretos.')
+    } else if (msg.toLowerCase().includes('email not confirmed')) {
+      toast.error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.')
+    } else {
+      toast.error('Falha no login.')
+    }
   }
 }
 </script>

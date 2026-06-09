@@ -11,7 +11,11 @@ export const authService = {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, username } },
+      options: {
+        data: { full_name: fullName, username },
+        // após confirmar o e-mail, volta para a origem atual (prod ou dev)
+        emailRedirectTo: window.location.origin,
+      },
     })
     if (error) throw error
     return data
