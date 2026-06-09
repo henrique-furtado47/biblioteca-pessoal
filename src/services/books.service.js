@@ -271,6 +271,26 @@ export const booksService = {
     return data.id
   },
 
+  /**
+   * Quem tem esta obra na estante (apenas entradas visíveis ao usuário atual,
+   * conforme RLS: bibliotecas públicas, de quem você segue, ou avaliações públicas).
+   * Retorna entradas com o perfil resolvido.
+   */
+  async readersOfBook(bookId) {
+    if (!bookId) return []
+    const { data, error } = await supabase
+      .from('user_books')
+      .select('id, user_id, status, rating')
+      .eq('book_id', bookId)
+    if (error) throw error
+    const rows = data ?? []
+    if (!rows.length) return []
+    const { profilesService } = await import('./profiles.service')
+    const profiles = await profilesService.getByIds([...new Set(rows.map((r) => r.user_id))])
+    const pMap = Object.fromEntries(profiles.map((p) => [p.id, p]))
+    return rows.map((r) => ({ ...r, profile: pMap[r.user_id] })).filter((r) => r.profile)
+  },
+
   /** Avaliações públicas de OUTROS usuários para a mesma obra. */
   async publicReviewsByBookId(bookId, excludeUserId) {
     if (!bookId) return []
