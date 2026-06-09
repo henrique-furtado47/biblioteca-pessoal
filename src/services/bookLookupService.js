@@ -46,10 +46,13 @@ export const bookLookupService = {
     if (cache.has(isbn)) return cache.get(isbn)
 
     let result = null
-    try {
-      result = await this.searchGoogleBooks(isbn)
-    } catch {
-      // erro na Google Books: tenta o fallback
+    if (googleAvailable) {
+      try {
+        result = await this.searchGoogleBooks(isbn)
+      } catch (e) {
+        // 429 = cota esgotada: não insiste mais na Google nesta sessão
+        if (e?.response?.status === 429) googleAvailable = false
+      }
     }
     if (!result) {
       result = await this.searchOpenLibrary(isbn) // pode lançar -> tratado no chamador
@@ -60,7 +63,9 @@ export const bookLookupService = {
   },
 
   async searchGoogleBooks(isbn) {
-    const { data } = await google.get('/volumes', { params: { q: `isbn:${isbn}` } })
+    const params = { q: `isbn:${isbn}` }
+    if (GOOGLE_KEY) params.key = GOOGLE_KEY
+    const { data } = await google.get('/volumes', { params })
     const vi = data?.items?.[0]?.volumeInfo
     if (!vi) return null
     return this.normalizeBookData('google', vi, isbn)
