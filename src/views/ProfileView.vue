@@ -75,8 +75,9 @@ const visibilityMessage = computed(() => {
     : 'Esta biblioteca é privada.'
 })
 
-// Agrupa a estante: lendo primeiro, depois biblioteca, e desejos à parte
+// Agrupa a estante: lendo primeiro, favoritos, depois biblioteca, e desejos à parte
 const reading = computed(() => books.value.filter((b) => b.status === 'reading'))
+const favorites = computed(() => books.value.filter((b) => b.favorite))
 const wishlist = computed(() => books.value.filter((b) => b.status === 'wishlist'))
 const library = computed(() =>
   books.value.filter((b) => b.status !== 'reading' && b.status !== 'wishlist'),
@@ -254,6 +255,11 @@ const displayName = computed(
             <section v-if="reading.length" class="mb-8">
               <h2 class="mb-3 font-semibold">Lendo agora</h2>
               <BookGrid :books="reading" :readonly="!isMe" :book-page="!isMe" />
+            </section>
+
+            <section v-if="favorites.length" class="mb-8">
+              <h2 class="mb-3 font-semibold">Favoritos</h2>
+              <BookGrid :books="favorites" :readonly="!isMe" :book-page="!isMe" />
             </section>
 
             <section v-if="library.length" class="mb-8">
