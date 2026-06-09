@@ -1,14 +1,14 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Skeleton from '@/components/ui/Skeleton.vue'
+import StarRating from '@/components/ui/StarRating.vue'
+import { STATUS_LABELS } from '@/constants'
 import { activitiesService } from '@/services/activities.service'
 import { useAuthStore } from '@/stores/auth.store'
-import { STATUS_LABELS } from '@/constants'
-import { initialsOf, formatDateTime } from '@/utils/formatters'
-import StarRating from '@/components/ui/StarRating.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import BaseButton from '@/components/ui/BaseButton.vue'
-import Skeleton from '@/components/ui/Skeleton.vue'
+import { formatDateTime, initialsOf } from '@/utils/formatters'
+import { onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -28,18 +28,18 @@ const actorName = (a) => a.actor?.display_name || a.actor?.username || 'Usuário
 
 // Frase do evento conforme o tipo
 function verb(a) {
-  if (a.type === 'added') return 'adicionou à estante'
-  if (a.type === 'favorite') return 'favoritou'
-  if (a.type === 'rating') return 'avaliou'
+  if (a.type === 'added') return ' adicionou à estante '
+  if (a.type === 'favorite') return ' favoritou '
+  if (a.type === 'rating') return ' avaliou '
   if (a.type === 'status') {
     return (
       {
-        reading: 'começou a ler',
-        finished: 'terminou de ler',
-        abandoned: 'abandonou',
-        wishlist: 'adicionou à lista de desejos',
-        unread: 'marcou como não lido',
-      }[a.data?.status] || `mudou o status para ${STATUS_LABELS[a.data?.status] || '—'}`
+        reading: ' começou a ler ',
+        finished: ' terminou de ler ',
+        abandoned: ' abandonou ',
+        wishlist: ' adicionou à lista de desejos ',
+        unread: ' marcou como não lido ',
+      }[a.data?.status] || ` mudou o status para ${STATUS_LABELS[a.data?.status] || '—'} `
     )
   }
   return 'atualizou'
