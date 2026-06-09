@@ -5,9 +5,11 @@ import { booksService } from '@/services/books.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { STATUS_LABELS } from '@/constants'
+import { initialsOf } from '@/utils/formatters'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import StarRating from '@/components/ui/StarRating.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import StatusBadge from '@/components/books/StatusBadge.vue'
 import BookReviews from '@/components/books/BookReviews.vue'
 
 const route = useRoute()
@@ -21,6 +23,7 @@ const loading = ref(true)
 const adding = ref(false)
 const tab = ref('about')
 const reviewCount = ref(0)
+const readers = ref([])
 
 onMounted(load)
 
@@ -33,10 +36,19 @@ async function load() {
   } catch {
     toast.error('Livro não encontrado.')
     router.push({ name: 'catalog' })
+    return
   } finally {
     loading.value = false
   }
+  // leitores visíveis (RLS decide quem aparece, conforme a visibilidade de cada um)
+  booksService.readersOfBook(route.params.id).then((r) => (readers.value = r))
 }
+
+function goToProfile(p) {
+  if (p.username) router.push({ name: 'profile', params: { username: p.username } })
+}
+
+const readerName = (r) => r.profile?.display_name || r.profile?.username || 'Usuário'
 
 async function addToShelf() {
   adding.value = true
@@ -141,6 +153,13 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
             >
               Avaliações<span v-if="reviewCount"> ({{ reviewCount }})</span>
             </button>
+            <button
+              class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+              :class="tab === 'readers' ? 'border-brand-600 text-brand-700 dark:text-brand-300' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+              @click="tab = 'readers'"
+            >
+              Leitores<span v-if="readers.length"> ({{ readers.length }})</span>
+            </button>
           </div>
 
           <div class="pt-5">
@@ -152,6 +171,29 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
             </div>
             <div v-show="tab === 'reviews'">
               <BookReviews :book-id="book.id" :show-heading="false" @count="reviewCount = $event" />
+            </div>
+            <div v-show="tab === 'readers'">
+              <ul v-if="readers.length" class="space-y-2">
+                <li v-for="r in readers" :key="r.id" class="card flex items-center gap-3 p-3">
+                  <button class="flex min-w-0 flex-1 items-center gap-3 text-left" @click="goToProfile(r.profile)">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-xs font-semibold text-white">
+                      <img v-if="r.profile.avatar_url" :src="r.profile.avatar_url" :alt="readerName(r)" class="h-full w-full object-cover" />
+                      <template v-else>{{ initialsOf(readerName(r)) }}</template>
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block truncate text-sm font-medium">{{ readerName(r) }}</span>
+                      <span v-if="r.profile.username" class="block truncate text-xs text-slate-500 dark:text-slate-400">@{{ r.profile.username }}</span>
+                    </span>
+                  </button>
+                  <div class="flex shrink-0 items-center gap-2">
+                    <StarRating v-if="r.rating" :model-value="Number(r.rating)" readonly size="sm" />
+                    <StatusBadge :status="r.status" />
+                  </div>
+                </li>
+              </ul>
+              <p v-else class="py-6 text-center text-sm text-slate-400">
+                Ninguém visível tem este livro ainda. Quem aparece aqui depende da visibilidade da biblioteca de cada pessoa.
+              </p>
             </div>
           </div>
         </div>
