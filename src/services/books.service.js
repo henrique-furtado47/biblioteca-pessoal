@@ -223,6 +223,30 @@ export const booksService = {
     return { items, count: count ?? 0 }
   },
 
+  /**
+   * Média e contagem de avaliações PÚBLICAS por obra (para uma lista de ids).
+   * @returns { [bookId]: { avg: number, count: number } }
+   */
+  async ratingsForBooks(bookIds) {
+    if (!bookIds.length) return {}
+    const { data, error } = await supabase
+      .from('user_books')
+      .select('book_id, rating')
+      .in('book_id', bookIds)
+      .eq('review_public', true)
+      .not('rating', 'is', null)
+    if (error) throw error
+    const agg = {}
+    for (const r of data ?? []) {
+      const a = agg[r.book_id] || (agg[r.book_id] = { sum: 0, count: 0 })
+      a.sum += Number(r.rating)
+      a.count += 1
+    }
+    const out = {}
+    for (const [id, a] of Object.entries(agg)) out[id] = { avg: a.sum / a.count, count: a.count }
+    return out
+  },
+
   /** Anos de publicação distintos no catálogo (desc). */
   async catalogYears() {
     const { data, error } = await supabase

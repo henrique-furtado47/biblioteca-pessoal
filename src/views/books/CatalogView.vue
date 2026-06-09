@@ -39,8 +39,14 @@ async function load() {
       page: page.value,
       pageSize,
     })
-    items.value = data
     count.value = total
+    // anexa média/contagem de avaliações públicas a cada obra
+    const ratings = await booksService.ratingsForBooks(data.map((b) => b.id))
+    items.value = data.map((b) => ({
+      ...b,
+      avg_rating: ratings[b.id]?.avg ?? null,
+      ratings_count: ratings[b.id]?.count ?? 0,
+    }))
   } finally {
     loading.value = false
   }

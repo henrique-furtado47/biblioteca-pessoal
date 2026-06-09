@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { booksService } from '@/services/books.service'
+import { friendshipsService } from '@/services/friendships.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { STATUS_LABELS } from '@/constants'
@@ -24,6 +25,7 @@ const adding = ref(false)
 const tab = ref('about')
 const reviewCount = ref(0)
 const readers = ref([])
+const friendIds = ref(new Set())
 
 onMounted(load)
 
@@ -42,7 +44,25 @@ async function load() {
   }
   // leitores visíveis (RLS decide quem aparece, conforme a visibilidade de cada um)
   booksService.readersOfBook(route.params.id).then((r) => (readers.value = r))
+  friendshipsService
+    .listFriends(auth.user.id)
+    .then((fs) => (friendIds.value = new Set(fs.map((f) => f.id))))
 }
+
+// Amigos por status nesta obra (entre os leitores visíveis)
+const friendsByStatus = (status) =>
+  readers.value.filter((r) => friendIds.value.has(r.user_id) && r.status === status)
+const friendsWant = computed(() => friendsByStatus('wishlist'))
+const friendsRead = computed(() => friendsByStatus('finished'))
+const friendsReading = computed(() => friendsByStatus('reading'))
+const friendGroups = computed(() =>
+  [
+    { label: 'Amigos que querem este livro', list: friendsWant.value },
+    { label: 'Amigos lendo este livro', list: friendsReading.value },
+    { label: 'Amigos que leram este livro', list: friendsRead.value },
+  ].filter((g) => g.list.length),
+)
+const hasFriendActivity = computed(() => friendGroups.value.length > 0)
 
 function goToProfile(p) {
   if (p.username) router.push({ name: 'profile', params: { username: p.username } })
@@ -163,7 +183,28 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
           </div>
 
           <div class="pt-5">
-            <div v-show="tab === 'about'">
+            <div v-show="tab === 'about'" class="space-y-5">
+              <!-- atividade de amigos (estilo Steam) -->
+              <div v-if="hasFriendActivity" class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                <div v-for="g in friendGroups" :key="g.label">
+                  <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ g.label }}</p>
+                  <div class="flex flex-wrap gap-3">
+                    <button
+                      v-for="r in g.list"
+                      :key="r.id"
+                      class="flex items-center gap-2 rounded-full bg-white px-2 py-1 pr-3 shadow-sm transition hover:ring-2 hover:ring-brand-300 dark:bg-slate-900"
+                      @click="goToProfile(r.profile)"
+                    >
+                      <span class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-xs font-semibold text-white">
+                        <img v-if="r.profile.avatar_url" :src="r.profile.avatar_url" :alt="readerName(r)" class="h-full w-full object-cover" />
+                        <template v-else>{{ initialsOf(readerName(r)) }}</template>
+                      </span>
+                      <span class="text-sm font-medium">{{ readerName(r) }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <p v-if="book.description" class="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 {{ book.description }}
               </p>
