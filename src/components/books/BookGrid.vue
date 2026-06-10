@@ -1,15 +1,29 @@
 <script setup>
+import { ref } from 'vue'
 import BookCard from './BookCard.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 
-defineProps({
+const props = defineProps({
   books: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   skeletonCount: { type: Number, default: 8 },
   readonly: { type: Boolean, default: false },
   bookPage: { type: Boolean, default: false },
+  draggable: { type: Boolean, default: false },
 })
-defineEmits(['toggle-favorite'])
+const emit = defineEmits(['toggle-favorite', 'reorder'])
+
+const dragFrom = ref(null)
+
+function onDrop(to) {
+  const from = dragFrom.value
+  dragFrom.value = null
+  if (from === null || from === to) return
+  const arr = [...props.books]
+  const [moved] = arr.splice(from, 1)
+  arr.splice(to, 0, moved)
+  emit('reorder', arr)
+}
 </script>
 
 <template>
@@ -24,14 +38,22 @@ defineEmits(['toggle-favorite'])
       </div>
     </template>
     <template v-else>
-      <BookCard
-        v-for="book in books"
+      <div
+        v-for="(book, i) in books"
         :key="book.id"
-        :book="book"
-        :readonly="readonly"
-        :book-page="bookPage"
-        @toggle-favorite="$emit('toggle-favorite', $event)"
-      />
+        :draggable="draggable"
+        :class="draggable ? 'cursor-move' : ''"
+        @dragstart="dragFrom = i"
+        @dragover.prevent
+        @drop="onDrop(i)"
+      >
+        <BookCard
+          :book="book"
+          :readonly="readonly"
+          :book-page="bookPage"
+          @toggle-favorite="$emit('toggle-favorite', $event)"
+        />
+      </div>
     </template>
   </div>
 </template>
