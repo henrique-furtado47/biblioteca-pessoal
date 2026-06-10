@@ -11,6 +11,7 @@ import {
   LinearScale,
   ArcElement,
 } from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { booksService } from '@/services/books.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { STATUS_LABELS } from '@/constants'
@@ -18,7 +19,7 @@ import StatCard from '@/components/stats/StatCard.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, ChartDataLabels)
 
 const auth = useAuthStore()
 const loading = ref(true)
@@ -136,7 +137,15 @@ const gridColor = 'rgba(148, 163, 184, 0.18)'
 const doughnutOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: 'bottom', labels: { color: tickColor, padding: 16 } } },
+  layout: { padding: 8 },
+  plugins: {
+    legend: { position: 'bottom', labels: { color: tickColor, padding: 16 } },
+    datalabels: {
+      color: '#fff',
+      font: { weight: 'bold', size: 13 },
+      formatter: (value) => value,
+    },
+  },
 }
 
 function barOptions(horizontal = false) {
@@ -144,7 +153,18 @@ function barOptions(horizontal = false) {
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: horizontal ? 'y' : 'x',
-    plugins: { legend: { display: false } },
+    layout: { padding: horizontal ? { right: 24 } : { top: 20 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        color: tickColor,
+        anchor: 'end',
+        align: horizontal ? 'right' : 'top',
+        clamp: true,
+        font: { weight: 'bold' },
+        formatter: (value) => value,
+      },
+    },
     scales: {
       x: { ticks: { color: tickColor, precision: 0 }, grid: { color: gridColor } },
       y: { ticks: { color: tickColor, precision: 0 }, grid: { color: gridColor } },
