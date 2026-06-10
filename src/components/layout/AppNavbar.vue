@@ -14,7 +14,6 @@ const auth = useAuthStore()
 const profileStore = useProfileStore()
 const toast = useToast()
 
-const search = ref('')
 const menuOpen = ref(false)
 
 onMounted(() => profileStore.loadMe())
@@ -26,11 +25,6 @@ const myProfileTo = computed(() =>
     ? { name: 'profile', params: { username: profileStore.username } }
     : { name: 'settings' },
 )
-
-function submitSearch() {
-  const q = search.value.trim()
-  router.push({ name: 'books', query: q ? { q } : {} })
-}
 
 async function logout() {
   try {
@@ -52,17 +46,6 @@ async function logout() {
     >
       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-
-    <!-- busca global -->
-    <form class="relative flex-1 max-w-md" @submit.prevent="submitSearch">
-      <svg class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
-      <input
-        v-model="search"
-        type="search"
-        placeholder="Buscar por título, autor ou ISBN..."
-        class="input-base !rounded-full !py-2 pl-10"
-      />
-    </form>
 
     <div class="ml-auto flex items-center gap-1.5">
       <ThemeToggle />
