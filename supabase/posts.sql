@@ -194,3 +194,80 @@ end;
 $$;
 
 grant execute on function public.ensure_review_post(uuid) to authenticated;
+
+-- ============================================================================
+--  VISIBILIDADE POR PUBLICAÇÃO  (pública / seguidores / amigos)
+--  pública  -> qualquer autenticado
+--  seguidores -> quem segue + amigos
+--  amigos   -> apenas amigos aceitos
+-- ============================================================================
+alter table public.posts
+  add column if not exists visibility text not null default 'public'
+  check (visibility in ('public', 'followers', 'friends'));
+
+create or replace function public.can_view_post(p_author uuid, p_visibility text)
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select
+    p_author = auth.uid()
+    or p_visibility = 'public'
+    or (p_visibility = 'followers' and (
+        exists (select 1 from public.follows f where f.following_id = p_author and f.follower_id = auth.uid())
+        or exists (
+          select 1 from public.friendships fr
+          where fr.status = 'accepted'
+            and ((fr.requester_id = auth.uid() and fr.addressee_id = p_author)
+              or (fr.addressee_id = auth.uid() and fr.requester_id = p_author)))
+      ))
+    or (p_visibility = 'friends' and exists (
+        select 1 from public.friendships fr
+        where fr.status = 'accepted'
+          and ((fr.requester_id = auth.uid() and fr.addressee_id = p_author)
+            or (fr.addressee_id = auth.uid() and fr.requester_id = p_author))
+      ));
+$$;
+
+-- Recria as policies de leitura para considerar a visibilidade do post
+drop policy if exists "posts_select_visible" on public.posts;
+create policy "posts_select_visible" on public.posts
+  for select using (public.can_view_post(user_id, visibility));
+
+drop policy if exists "post_likes_select" on public.post_likes;
+create policy "post_likes_select" on public.post_likes
+  for select using (
+    exists (select 1 from public.posts p where p.id = post_id and public.can_view_post(p.user_id, p.visibility))
+  );
+
+drop policy if exists "post_comments_select" on public.post_comments;
+create policy "post_comments_select" on public.post_comments
+  for select using (
+    exists (select 1 from public.posts p where p.id = post_id and public.can_view_post(p.user_id, p.visibility))
+  );
+
+drop policy if exists "comment_likes_select" on public.comment_likes;
+create policy "comment_likes_select" on public.comment_likes
+  for select using (
+    exists (
+      select 1 from public.post_comments c
+      join public.posts p on p.id = c.post_id
+      where c.id = comment_id and public.can_view_post(p.user_id, p.visibility)
+    )
+  );
+
+-- também ajusta o check de inserção de curtidas/comentários para a visibilidade
+drop policy if exists "post_likes_insert_own" on public.post_likes;
+create policy "post_likes_insert_own" on public.post_likes
+  for insert with check (
+    user_id = auth.uid()
+    and exists (select 1 from public.posts p where p.id = post_id and public.can_view_post(p.user_id, p.visibility))
+  );
+
+drop policy if exists "post_comments_insert_own" on public.post_comments;
+create policy "post_comments_insert_own" on public.post_comments
+  for insert with check (
+    user_id = auth.uid()
+    and exists (select 1 from public.posts p where p.id = post_id and public.can_view_post(p.user_id, p.visibility))
+  );
