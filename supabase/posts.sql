@@ -128,6 +128,34 @@ create policy "post_comments_delete_own" on public.post_comments
   for delete using (user_id = auth.uid());
 
 -- ----------------------------------------------------------------------------
+--  Tabela: comment_likes  (curtidas em comentários e respostas)
+-- ----------------------------------------------------------------------------
+create table if not exists public.comment_likes (
+  comment_id  uuid not null references public.post_comments(id) on delete cascade,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (comment_id, user_id)
+);
+
+alter table public.comment_likes enable row level security;
+
+drop policy if exists "comment_likes_select" on public.comment_likes;
+create policy "comment_likes_select" on public.comment_likes
+  for select using (
+    exists (
+      select 1 from public.post_comments c
+      join public.posts p on p.id = c.post_id
+      where c.id = comment_id and public.can_view_user(p.user_id)
+    )
+  );
+drop policy if exists "comment_likes_insert_own" on public.comment_likes;
+create policy "comment_likes_insert_own" on public.comment_likes
+  for insert with check (user_id = auth.uid());
+drop policy if exists "comment_likes_delete_own" on public.comment_likes;
+create policy "comment_likes_delete_own" on public.comment_likes
+  for delete using (user_id = auth.uid());
+
+-- ----------------------------------------------------------------------------
 --  Garante (ou recupera) o post vinculado a uma avaliação pública.
 --  Permite que curtidas/comentários de uma avaliação usem um post como base.
 --  security definer: o post pertence ao AUTOR da avaliação.
