@@ -166,12 +166,15 @@ language plpgsql
 security definer set search_path = public
 as $$
 declare
-  v_post_id uuid;
-  v_user_id uuid;
-  v_book_id uuid;
-  v_rating  numeric(2,1);
-  v_public  boolean;
-  v_notes   text;
+  v_post_id    uuid;
+  v_user_id    uuid;
+  v_book_id    uuid;
+  v_rating     numeric(2,1);
+  v_public     boolean;
+  v_notes      text;
+  v_comment    record;
+  v_new_id     uuid;
+  v_parent_new uuid;
 begin
   select id into v_post_id from public.posts where user_book_id = p_user_book_id limit 1;
   if v_post_id is not null then
@@ -182,7 +185,7 @@ begin
     into v_user_id, v_book_id, v_rating, v_public, v_notes
   from public.user_books where id = p_user_book_id;
 
-  -- só cria para avaliações públicas
+  -- só publica avaliações públicas
   if v_user_id is null or v_public is not true then
     return null;
   end if;
@@ -190,6 +193,44 @@ begin
   insert into public.posts (user_id, kind, book_id, user_book_id, rating, caption)
   values (v_user_id, 'review', v_book_id, p_user_book_id, v_rating, v_notes)
   returning id into v_post_id;
+
+  -- migra curtidas nativas da avaliação para o post
+  insert into public.post_likes (post_id, user_id, created_at)
+  select v_post_id, user_id, created_at
+  from public.review_likes
+  where review_id = p_user_book_id
+  on conflict do nothing;
+
+  -- migra comentários: tabela temp para mapear old_id -> new_id
+  create temp table _cmap (old_id uuid primary key, new_id uuid) on commit drop;
+
+  -- nível raiz
+  for v_comment in
+    select id, user_id, body, created_at
+    from public.review_comments
+    where review_id = p_user_book_id and parent_id is null
+    order by created_at
+  loop
+    insert into public.post_comments (post_id, user_id, body, created_at)
+    values (v_post_id, v_comment.user_id, v_comment.body, v_comment.created_at)
+    returning id into v_new_id;
+    insert into _cmap values (v_comment.id, v_new_id);
+  end loop;
+
+  -- respostas (1 nível)
+  for v_comment in
+    select rc.id, rc.user_id, rc.body, rc.parent_id, rc.created_at
+    from public.review_comments rc
+    where rc.review_id = p_user_book_id and rc.parent_id is not null
+    order by rc.created_at
+  loop
+    select new_id into v_parent_new from _cmap where old_id = v_comment.parent_id;
+    insert into public.post_comments (post_id, user_id, body, parent_id, created_at)
+    values (v_post_id, v_comment.user_id, v_comment.body, v_parent_new, v_comment.created_at)
+    returning id into v_new_id;
+    insert into _cmap values (v_comment.id, v_new_id);
+  end loop;
+
   return v_post_id;
 end;
 $$;
