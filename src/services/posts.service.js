@@ -121,43 +121,11 @@ export const postsService = {
     }
   },
 
-  /** Mapa userBookId -> {postId, likeCount, liked, commentCount} para avaliações. */
-  async reviewPostsMap(userBookIds, meId) {
-    if (!userBookIds.length) return {};
-    const { data: posts, error } = await supabase
-      .from("posts")
-      .select("id, user_book_id")
-      .in("user_book_id", userBookIds);
-    if (error) throw error;
-    const map = {};
-    const postIds = (posts ?? []).map((p) => p.id);
-    let likeRows = [];
-    let commentRows = [];
-    if (postIds.length) {
-      const [l, c] = await Promise.all([
-        supabase
-          .from("post_likes")
-          .select("post_id, user_id")
-          .in("post_id", postIds),
-        supabase.from("post_comments").select("post_id").in("post_id", postIds),
-      ]);
-      likeRows = l.data ?? [];
-      commentRows = c.data ?? [];
-    }
-    for (const p of posts ?? []) {
-      const lk = likeRows.filter((x) => x.post_id === p.id);
-      map[p.user_book_id] = {
-        postId: p.id,
-        likeCount: lk.length,
-        liked: lk.some((x) => x.user_id === meId),
-        commentCount: commentRows.filter((x) => x.post_id === p.id).length,
-      };
-    }
-    return map;
-  },
-
-  /** Garante (ou recupera) o post vinculado a uma avaliação pública e retorna o id. */
-  async ensureReviewPost(userBookId) {
+  /**
+   * Publica uma avaliação como post (migra curtidas e comentários nativos).
+   * Retorna o id do post criado (ou já existente).
+   */
+  async publishReview(userBookId) {
     const { data, error } = await supabase.rpc("ensure_review_post", {
       p_user_book_id: userBookId,
     });
