@@ -171,14 +171,15 @@ declare
   v_book_id uuid;
   v_rating  numeric(2,1);
   v_public  boolean;
+  v_notes   text;
 begin
   select id into v_post_id from public.posts where user_book_id = p_user_book_id limit 1;
   if v_post_id is not null then
     return v_post_id;
   end if;
 
-  select user_id, book_id, rating, review_public
-    into v_user_id, v_book_id, v_rating, v_public
+  select user_id, book_id, rating, review_public, notes
+    into v_user_id, v_book_id, v_rating, v_public, v_notes
   from public.user_books where id = p_user_book_id;
 
   -- só cria para avaliações públicas
@@ -186,14 +187,23 @@ begin
     return null;
   end if;
 
-  insert into public.posts (user_id, kind, book_id, user_book_id, rating)
-  values (v_user_id, 'review', v_book_id, p_user_book_id, v_rating)
+  insert into public.posts (user_id, kind, book_id, user_book_id, rating, caption)
+  values (v_user_id, 'review', v_book_id, p_user_book_id, v_rating, v_notes)
   returning id into v_post_id;
   return v_post_id;
 end;
 $$;
 
 grant execute on function public.ensure_review_post(uuid) to authenticated;
+
+-- Backfill: posts de avaliação criados sem legenda recebem o texto da avaliação
+update public.posts p
+set caption = ub.notes
+from public.user_books ub
+where p.user_book_id = ub.id
+  and p.kind = 'review'
+  and p.caption is null
+  and ub.notes is not null;
 
 -- ============================================================================
 --  VISIBILIDADE POR PUBLICAÇÃO  (pública / seguidores / amigos)
