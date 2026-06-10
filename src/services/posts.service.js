@@ -140,7 +140,7 @@ export const postsService = {
     return data
   },
 
-  async listComments(postId) {
+  async listComments(postId, meId) {
     const { data, error } = await supabase
       .from('post_comments')
       .select('id, user_id, body, parent_id, created_at')
@@ -148,9 +148,40 @@ export const postsService = {
       .order('created_at', { ascending: true })
     if (error) throw error
     const rows = data ?? []
-    const profiles = await profilesService.getByIds([...new Set(rows.map((r) => r.user_id))])
+    const commentIds = rows.map((r) => r.id)
+    const [profiles, likes] = await Promise.all([
+      profilesService.getByIds([...new Set(rows.map((r) => r.user_id))]),
+      commentIds.length
+        ? supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
+        : Promise.resolve({ data: [] }),
+    ])
     const pMap = Object.fromEntries(profiles.map((p) => [p.id, p]))
-    return rows.map((r) => ({ ...r, author: pMap[r.user_id] || null }))
+    const likeRows = likes.data ?? []
+    return rows.map((r) => {
+      const lk = likeRows.filter((l) => l.comment_id === r.id)
+      return {
+        ...r,
+        author: pMap[r.user_id] || null,
+        like_count: lk.length,
+        liked: lk.some((l) => l.user_id === meId),
+      }
+    })
+  },
+
+  async toggleCommentLike(commentId, userId, liked) {
+    if (liked) {
+      const { error } = await supabase
+        .from('comment_likes')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', userId)
+      if (error) throw error
+    } else {
+      const { error } = await supabase
+        .from('comment_likes')
+        .insert({ comment_id: commentId, user_id: userId })
+      if (error && error.code !== '23505') throw error
+    }
   },
 
   async addComment(postId, userId, body, parentId = null) {
