@@ -55,6 +55,8 @@ async function removePost() {
 }
 
 const bookTo = () => ({ name: 'book-page', params: { id: props.post.book.id } })
+const visLabel = () =>
+  ({ public: 'Público', followers: 'Seguidores', friends: 'Amigos' })[props.post.visibility] || ''
 </script>
 
 <template>
@@ -69,7 +71,7 @@ const bookTo = () => ({ name: 'book-page', params: { id: props.post.book.id } })
       </RouterLink>
       <div class="min-w-0 flex-1">
         <RouterLink :to="profileTo()" class="text-sm font-semibold hover:text-brand-600">{{ authorName() }}</RouterLink>
-        <p class="text-xs text-slate-400">{{ formatDateTime(post.created_at) }}</p>
+        <p class="text-xs text-slate-400">{{ formatDateTime(post.created_at) }} · {{ visLabel() }}</p>
       </div>
       <button v-if="isOwner()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="Excluir" @click="removePost">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5h6v2m-1 0v12m-4-12v12M5 7l1 13h12l1-13"/></svg>

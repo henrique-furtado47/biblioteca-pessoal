@@ -4,7 +4,7 @@ import { followsService } from './follows.service'
 import { friendshipsService } from './friendships.service'
 
 const POST_SELECT =
-  'id, user_id, caption, kind, book_id, user_book_id, rating, status, created_at, book:books(id, title, cover_url, author:authors(name))'
+  'id, user_id, caption, kind, visibility, book_id, user_book_id, rating, status, created_at, book:books(id, title, cover_url, author:authors(name))'
 
 /** Anexa autor, contagens de curtida/comentário e se EU curti. */
 async function enrich(rows, meId) {
@@ -32,13 +32,14 @@ async function enrich(rows, meId) {
 }
 
 export const postsService = {
-  async create({ userId, caption, kind = 'text', bookId = null, userBookId = null, rating = null, status = null }) {
+  async create({ userId, caption, kind = 'text', visibility = 'public', bookId = null, userBookId = null, rating = null, status = null }) {
     const { data, error } = await supabase
       .from('posts')
       .insert({
         user_id: userId,
         caption: caption?.trim() || null,
         kind,
+        visibility,
         book_id: bookId,
         user_book_id: userBookId,
         rating,
@@ -55,19 +56,31 @@ export const postsService = {
     if (error) throw error
   },
 
-  /** Feed: publicações de quem sigo + amigos + eu mesmo. */
-  async feed(userId, { limit = 50 } = {}) {
-    const [following, friends] = await Promise.all([
-      followsService.followingIds(userId),
-      friendshipsService.listFriends(userId),
-    ])
-    const ids = [...new Set([userId, ...following, ...friends.map((f) => f.id)])]
-    const { data, error } = await supabase
+  /**
+   * Feed por escopo:
+   *  - 'following' (padrão): eu + quem sigo
+   *  - 'friends': eu + amigos
+   *  - 'public': publicações públicas de qualquer pessoa (descoberta)
+   * A RLS ainda garante que você só veja o que tem permissão.
+   */
+  async feed(userId, { scope = 'following', limit = 50 } = {}) {
+    let query = supabase
       .from('posts')
       .select(POST_SELECT)
-      .in('user_id', ids)
       .order('created_at', { ascending: false })
       .limit(limit)
+
+    if (scope === 'public') {
+      query = query.eq('visibility', 'public')
+    } else if (scope === 'friends') {
+      const friends = await friendshipsService.listFriends(userId)
+      query = query.in('user_id', [userId, ...friends.map((f) => f.id)])
+    } else {
+      const following = await followsService.followingIds(userId)
+      query = query.in('user_id', [userId, ...following])
+    }
+
+    const { data, error } = await query
     if (error) throw error
     return enrich(data ?? [], userId)
   },

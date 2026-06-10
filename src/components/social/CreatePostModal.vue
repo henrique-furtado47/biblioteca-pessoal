@@ -21,7 +21,14 @@ const loaded = ref(false)
 const caption = ref('')
 const selectedId = ref('') // user_book id
 const kind = ref('review')
+const visibility = ref('public')
 const submitting = ref(false)
+
+const VISIBILITY_OPTIONS = [
+  { value: 'public', label: 'Pública — todos' },
+  { value: 'followers', label: 'Seguidores' },
+  { value: 'friends', label: 'Amigos' },
+]
 
 const KIND_OPTIONS = [
   { value: 'review', label: 'Avaliação (nota)' },
@@ -74,6 +81,7 @@ async function submit() {
       userId: auth.user.id,
       caption: caption.value,
       kind: b ? kind.value : 'text',
+      visibility: visibility.value,
       bookId: b?.book_id ?? null,
       userBookId: b?.id ?? null,
       rating: b && kind.value === 'review' ? b.rating : null,
@@ -114,6 +122,8 @@ async function submit() {
         placeholder="Sem livro"
         :options="myBooks.map((b) => ({ value: b.id, label: b.title }))"
       />
+
+      <BaseSelect v-model="visibility" label="Quem pode ver" :options="VISIBILITY_OPTIONS" />
 
       <template v-if="selectedBook">
         <BaseSelect v-model="kind" label="O que compartilhar" :options="KIND_OPTIONS" />
