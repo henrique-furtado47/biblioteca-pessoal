@@ -67,7 +67,12 @@ create table if not exists public.post_comments (
   created_at  timestamptz not null default now()
 );
 
+-- resposta a outro comentário (1 nível de thread)
+alter table public.post_comments
+  add column if not exists parent_id uuid references public.post_comments(id) on delete cascade;
+
 create index if not exists post_comments_post_idx on public.post_comments(post_id, created_at);
+create index if not exists post_comments_parent_idx on public.post_comments(parent_id);
 
 -- ============================================================================
 --  ROW LEVEL SECURITY
@@ -121,3 +126,43 @@ create policy "post_comments_insert_own" on public.post_comments
 drop policy if exists "post_comments_delete_own" on public.post_comments;
 create policy "post_comments_delete_own" on public.post_comments
   for delete using (user_id = auth.uid());
+
+-- ----------------------------------------------------------------------------
+--  Garante (ou recupera) o post vinculado a uma avaliação pública.
+--  Permite que curtidas/comentários de uma avaliação usem um post como base.
+--  security definer: o post pertence ao AUTOR da avaliação.
+-- ----------------------------------------------------------------------------
+create or replace function public.ensure_review_post(p_user_book_id uuid)
+returns uuid
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_post_id uuid;
+  v_user_id uuid;
+  v_book_id uuid;
+  v_rating  numeric(2,1);
+  v_public  boolean;
+begin
+  select id into v_post_id from public.posts where user_book_id = p_user_book_id limit 1;
+  if v_post_id is not null then
+    return v_post_id;
+  end if;
+
+  select user_id, book_id, rating, review_public
+    into v_user_id, v_book_id, v_rating, v_public
+  from public.user_books where id = p_user_book_id;
+
+  -- só cria para avaliações públicas
+  if v_user_id is null or v_public is not true then
+    return null;
+  end if;
+
+  insert into public.posts (user_id, kind, book_id, user_book_id, rating)
+  values (v_user_id, 'review', v_book_id, p_user_book_id, v_rating)
+  returning id into v_post_id;
+  return v_post_id;
+end;
+$$;
+
+grant execute on function public.ensure_review_post(uuid) to authenticated;
