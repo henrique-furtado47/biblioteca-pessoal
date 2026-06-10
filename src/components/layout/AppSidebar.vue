@@ -1,7 +1,7 @@
 <script setup>
+import { useProfileStore } from '@/stores/profile.store'
 import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useProfileStore } from '@/stores/profile.store'
 
 defineProps({ open: { type: Boolean, default: false } })
 defineEmits(['close'])
@@ -92,7 +92,9 @@ const icons = {
     </nav>
 
     <div class="border-t border-slate-200 p-4 text-xs text-slate-400 dark:border-slate-800">
-      Minha Biblioteca · v{{ appVersion }}
+      Minha Biblioteca · v{{ appVersion }} <br>Henrique Furtado · 
+    <a href="https://www.instagram.com/henrique.furtado47" target="_blank" rel="noopener noreferrer">Instagram</a>
+  <a href="https://github.com/henrique-furtado47" target="_blank" rel="noopener noreferrer"> Github</a>
     </div>
   </aside>
 </template>
