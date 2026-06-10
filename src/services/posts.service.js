@@ -99,10 +99,51 @@ export const postsService = {
     }
   },
 
+  /** Mapa userBookId -> {postId, likeCount, liked, commentCount} para avaliações. */
+  async reviewPostsMap(userBookIds, meId) {
+    if (!userBookIds.length) return {}
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select('id, user_book_id')
+      .in('user_book_id', userBookIds)
+    if (error) throw error
+    const map = {}
+    const postIds = (posts ?? []).map((p) => p.id)
+    let likeRows = []
+    let commentRows = []
+    if (postIds.length) {
+      const [l, c] = await Promise.all([
+        supabase.from('post_likes').select('post_id, user_id').in('post_id', postIds),
+        supabase.from('post_comments').select('post_id').in('post_id', postIds),
+      ])
+      likeRows = l.data ?? []
+      commentRows = c.data ?? []
+    }
+    for (const p of posts ?? []) {
+      const lk = likeRows.filter((x) => x.post_id === p.id)
+      map[p.user_book_id] = {
+        postId: p.id,
+        likeCount: lk.length,
+        liked: lk.some((x) => x.user_id === meId),
+        commentCount: commentRows.filter((x) => x.post_id === p.id).length,
+      }
+    }
+    return map
+  },
+
+  /** Garante o post vinculado a uma avaliação pública e retorna o id. */
+  async ensureReviewPost(userBookId) {
+    const { data, error } = await supabase.rpc('ensure_review_post', {
+      p_user_book_id: userBookId,
+    })
+    if (error) throw error
+    return data
+  },
+
   async listComments(postId) {
     const { data, error } = await supabase
       .from('post_comments')
-      .select('id, user_id, body, created_at')
+      .select('id, user_id, body, parent_id, created_at')
       .eq('post_id', postId)
       .order('created_at', { ascending: true })
     if (error) throw error
@@ -112,11 +153,11 @@ export const postsService = {
     return rows.map((r) => ({ ...r, author: pMap[r.user_id] || null }))
   },
 
-  async addComment(postId, userId, body) {
+  async addComment(postId, userId, body, parentId = null) {
     const { data, error } = await supabase
       .from('post_comments')
-      .insert({ post_id: postId, user_id: userId, body: body.trim() })
-      .select('id, user_id, body, created_at')
+      .insert({ post_id: postId, user_id: userId, body: body.trim(), parent_id: parentId })
+      .select('id, user_id, body, parent_id, created_at')
       .single()
     if (error) throw error
     return data
