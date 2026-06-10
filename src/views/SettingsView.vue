@@ -6,6 +6,7 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ProfileSettings from '@/components/profile/ProfileSettings.vue'
+import ChangePassword from '@/components/profile/ChangePassword.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -48,6 +49,9 @@ async function logout() {
 
     <!-- Perfil público -->
     <ProfileSettings />
+
+    <!-- Segurança (alterar senha) -->
+    <ChangePassword />
 
     <!-- Aparência -->
     <section class="card p-6">
