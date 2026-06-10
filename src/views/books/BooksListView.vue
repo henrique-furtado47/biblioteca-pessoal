@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import draggable from 'vuedraggable'
 import { useBooksStore } from '@/stores/books.store'
 import { useAuthorsStore } from '@/stores/authors.store'
 import { useGenresStore } from '@/stores/genres.store'
@@ -10,12 +11,15 @@ import { booksService } from '@/services/books.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import BookCard from '@/components/books/BookCard.vue'
 import BookGrid from '@/components/books/BookGrid.vue'
 import BookFilters from '@/components/books/BookFilters.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
+
+const GRID = 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'
 
 const router = useRouter()
 const books = useBooksStore()
@@ -29,10 +33,13 @@ const { items, loading, filters, page, totalPages, count } = storeToRefs(books)
 const years = ref([])
 const searchTerm = ref(books.filters.search || '')
 
-// Pasta selecionada (null = todos)
 const selectedShelf = ref(null)
 const shelfItems = ref([])
 const shelfLoading = ref(false)
+
+// baldes temporários por pasta para receber o livro arrastado (vuedraggable)
+const dropBuckets = reactive({})
+const bucket = (id) => (dropBuckets[id] ||= [])
 
 onMounted(async () => {
   await Promise.all([
@@ -53,6 +60,7 @@ function onSearch() {
 async function onToggleFavorite(book) {
   try {
     await books.toggleFavorite(book)
+    if (selectedShelf.value) selectShelf(selectedShelf.value)
   } catch {
     toast.error('Não foi possível atualizar o favorito.')
   }
@@ -94,24 +102,30 @@ async function deleteFolder(shelf) {
   if (selectedShelf.value === shelf.id) selectShelf(null)
 }
 
-async function onReorderShelfBooks(newOrder) {
-  shelfItems.value = newOrder
+// arrastar livro (da grade) e soltar no chip da pasta
+async function onDropToShelf(shelfId, evt) {
+  const arr = dropBuckets[shelfId] || []
+  const book = arr[evt?.newIndex] ?? arr[0]
+  arr.splice(0) // limpa o balde (o chip não guarda livros, só registra)
+  if (!book) return
+  try {
+    await booksService.addBookToShelf(book.id, shelfId)
+    toast.success('Adicionado à pasta.')
+    if (selectedShelf.value === shelfId) selectShelf(shelfId)
+  } catch {
+    toast.error('Não foi possível adicionar à pasta.')
+  }
+}
+
+async function persistShelfBooks() {
   await booksService.reorderShelfBooks(
     selectedShelf.value,
-    newOrder.map((b) => b.id),
+    shelfItems.value.map((b) => b.id),
   )
 }
 
-// Drag das pastas (chips)
-const dragChip = ref(null)
-function onChipDrop(to) {
-  const from = dragChip.value
-  dragChip.value = null
-  if (from === null || from === to) return
-  const arr = [...shelvesStore.items]
-  const [m] = arr.splice(from, 1)
-  arr.splice(to, 0, m)
-  shelvesStore.reorder(arr.map((s) => s.id))
+function persistChipOrder() {
+  shelvesStore.reorder(shelvesStore.items.map((s) => s.id))
 }
 
 const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf.value)
@@ -130,7 +144,7 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
       </BaseButton>
     </div>
 
-    <!-- barra de pastas -->
+    <!-- barra de pastas (arraste um livro até um chip para adicioná-lo) -->
     <div class="flex flex-wrap items-center gap-2">
       <button
         class="rounded-full border px-3 py-1.5 text-sm font-medium transition"
@@ -139,19 +153,35 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
       >
         Todos
       </button>
-      <button
-        v-for="(shelf, i) in shelvesStore.items"
-        :key="shelf.id"
-        draggable="true"
-        class="cursor-move rounded-full border px-3 py-1.5 text-sm font-medium transition"
-        :class="selectedShelf === shelf.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 text-slate-600 hover:border-brand-400 dark:border-slate-700 dark:text-slate-300'"
-        @click="selectShelf(shelf.id)"
-        @dragstart="dragChip = i"
-        @dragover.prevent
-        @drop="onChipDrop(i)"
+
+      <draggable
+        v-model="shelvesStore.items"
+        item-key="id"
+        handle=".chip-grip"
+        :animation="150"
+        class="flex flex-wrap items-center gap-2"
+        @end="persistChipOrder"
       >
-        {{ shelf.name }}
-      </button>
+        <template #item="{ element: shelf }">
+          <draggable
+            :list="bucket(shelf.id)"
+            :group="{ name: 'books', put: true, pull: false }"
+            :sort="false"
+            item-key="id"
+            tag="div"
+            class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition"
+            :class="selectedShelf === shelf.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 text-slate-600 hover:border-brand-400 dark:border-slate-700 dark:text-slate-300'"
+            @add="onDropToShelf(shelf.id, $event)"
+          >
+            <template #header>
+              <span class="chip-grip cursor-move select-none opacity-60">⠿</span>
+              <button type="button" @click="selectShelf(shelf.id)">{{ shelf.name }}</button>
+            </template>
+            <template #item="{ element }"><span :key="element.id" class="hidden" /></template>
+          </draggable>
+        </template>
+      </draggable>
+
       <button
         class="rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-700"
         @click="createFolder"
@@ -177,7 +207,23 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
         @reset="books.resetFilters()"
       />
 
-      <BookGrid v-if="loading || items.length" :books="items" :loading="loading" @toggle-favorite="onToggleFavorite" />
+      <p v-if="items.length && shelvesStore.items.length" class="text-xs text-slate-400">
+        Dica: arraste um livro até uma pasta lá em cima para adicioná-lo.
+      </p>
+
+      <BookGrid v-if="loading" :books="[]" loading />
+      <draggable
+        v-else-if="items.length"
+        :list="items"
+        :group="{ name: 'books', pull: 'clone', put: false }"
+        :sort="false"
+        item-key="id"
+        :class="GRID"
+      >
+        <template #item="{ element }">
+          <div><BookCard :book="element" @toggle-favorite="onToggleFavorite" /></div>
+        </template>
+      </draggable>
 
       <EmptyState
         v-else
@@ -201,19 +247,24 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
       </div>
       <p class="text-xs text-slate-400">Arraste os livros para reordenar dentro da pasta.</p>
 
-      <BookGrid
-        v-if="shelfLoading || shelfItems.length"
-        :books="shelfItems"
-        :loading="shelfLoading"
-        draggable
-        @toggle-favorite="onToggleFavorite"
-        @reorder="onReorderShelfBooks"
-      />
+      <BookGrid v-if="shelfLoading" :books="[]" loading />
+      <draggable
+        v-else-if="shelfItems.length"
+        v-model="shelfItems"
+        item-key="id"
+        :animation="150"
+        :class="GRID"
+        @end="persistShelfBooks"
+      >
+        <template #item="{ element }">
+          <div><BookCard :book="element" @toggle-favorite="onToggleFavorite" /></div>
+        </template>
+      </draggable>
       <EmptyState
         v-else
         icon="book"
         title="Pasta vazia"
-        message="Adicione livros a esta pasta pela página do livro (botão Pastas)."
+        message="Arraste livros até esta pasta (na visão Todos) ou use o botão Pastas na página do livro."
       />
     </template>
   </div>
