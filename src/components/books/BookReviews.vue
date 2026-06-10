@@ -66,22 +66,14 @@ async function load() {
   }
 }
 
-async function ensurePost(reviewId) {
-  const it = interactions[reviewId]
-  if (it.postId) return it.postId
-  it.postId = await postsService.ensureReviewPost(reviewId)
-  return it.postId
-}
-
 async function like(review) {
   const it = interactions[review.id]
+  if (!it?.postId) return
   const was = it.liked
   try {
-    const postId = await ensurePost(review.id)
-    if (!postId) return
     it.liked = !was
     it.likeCount += was ? -1 : 1
-    await postsService.toggleLike(postId, auth.user.id, was)
+    await postsService.toggleLike(it.postId, auth.user.id, was)
   } catch {
     it.liked = was
     it.likeCount += was ? 1 : -1
@@ -94,11 +86,7 @@ async function toggleComments(review) {
     openId.value = null
     return
   }
-  const postId = await ensurePost(review.id)
-  if (!postId) {
-    toast.error('Não foi possível abrir os comentários.')
-    return
-  }
+  if (!interactions[review.id]?.postId) return
   openId.value = review.id
 }
 
@@ -129,8 +117,8 @@ const reviewName = (r) => r.profile?.display_name || r.profile?.username || 'Usu
         </div>
         <p v-if="r.notes" class="mt-2 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{{ r.notes }}</p>
 
-        <!-- ações da avaliação -->
-        <div class="mt-2 flex items-center gap-4 text-sm">
+        <!-- ações da avaliação — só exibe se já existe um post vinculado -->
+        <div v-if="interactions[r.id]?.postId" class="mt-2 flex items-center gap-4 text-sm">
           <button class="flex items-center gap-1.5" :class="interactions[r.id]?.liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'" @click="like(r)">
             <svg class="h-5 w-5" :class="interactions[r.id]?.liked ? 'fill-rose-500' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
             {{ interactions[r.id]?.likeCount || 0 }}
