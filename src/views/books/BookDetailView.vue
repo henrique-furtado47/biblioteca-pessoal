@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { booksService } from '@/services/books.service'
 import { useBooksStore } from '@/stores/books.store'
+import { useShelvesStore } from '@/stores/shelves.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -18,12 +19,14 @@ import BookReviews from '@/components/books/BookReviews.vue'
 const route = useRoute()
 const router = useRouter()
 const books = useBooksStore()
+const shelvesStore = useShelvesStore()
 const auth = useAuthStore()
 const toast = useToast()
 const confirm = useConfirm()
 
 const book = ref(null)
 const loading = ref(true)
+const bookShelfIds = ref([])
 
 const isOwner = computed(() => book.value && book.value.user_id === auth.user?.id)
 
@@ -37,9 +40,33 @@ async function load() {
   } catch {
     toast.error('Livro não encontrado.')
     router.push({ name: 'books' })
+    return
   } finally {
     loading.value = false
   }
+  if (isOwner.value) {
+    shelvesStore.fetch()
+    bookShelfIds.value = await booksService.shelvesOfBook(book.value.id)
+  }
+}
+
+async function toggleShelf(shelfId) {
+  const set = new Set(bookShelfIds.value)
+  set.has(shelfId) ? set.delete(shelfId) : set.add(shelfId)
+  const ids = [...set]
+  try {
+    await booksService.setBookShelves(book.value.id, ids)
+    bookShelfIds.value = ids
+  } catch {
+    toast.error('Não foi possível atualizar as pastas.')
+  }
+}
+
+async function newFolderForBook() {
+  const name = window.prompt('Nome da nova pasta')
+  if (!name || !name.trim()) return
+  const shelf = await shelvesStore.create(name)
+  toggleShelf(shelf.id)
 }
 
 async function toggleFavorite() {
@@ -109,6 +136,34 @@ const genreList = (b) => b?.genres?.map((g) => g.genre?.name).filter(Boolean) ||
               Editar
             </BaseButton>
             <BaseButton variant="danger" @click="remove">Excluir</BaseButton>
+          </div>
+
+          <!-- pastas -->
+          <div class="card p-4">
+            <p class="mb-2 text-sm font-semibold">Pastas</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="shelf in shelvesStore.items"
+                :key="shelf.id"
+                type="button"
+                class="rounded-full border px-2.5 py-1 text-xs font-medium transition"
+                :class="
+                  bookShelfIds.includes(shelf.id)
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-slate-300 text-slate-600 hover:border-brand-400 dark:border-slate-700 dark:text-slate-300'
+                "
+                @click="toggleShelf(shelf.id)"
+              >
+                {{ shelf.name }}
+              </button>
+              <button
+                type="button"
+                class="rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:border-brand-400 hover:text-brand-600 dark:border-slate-700"
+                @click="newFolderForBook"
+              >
+                + Nova
+              </button>
+            </div>
           </div>
         </template>
       </div>

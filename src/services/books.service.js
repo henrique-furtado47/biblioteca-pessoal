@@ -197,6 +197,62 @@ export const booksService = {
     return { id, status }
   },
 
+  /** Livros (entradas de estante) dentro de uma pasta, na ordem definida. */
+  async shelfBooks(shelfId) {
+    const { data, error } = await supabase
+      .from('user_book_shelves')
+      .select(`position, user_book:user_books(${SHELF_COLS}, ${bookEmbed()})`)
+      .eq('shelf_id', shelfId)
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    return (data ?? []).map((r) => flatten(r.user_book)).filter((b) => b.id)
+  },
+
+  /** Ids das pastas em que uma entrada de estante está. */
+  async shelvesOfBook(userBookId) {
+    const { data, error } = await supabase
+      .from('user_book_shelves')
+      .select('shelf_id')
+      .eq('user_book_id', userBookId)
+    if (error) throw error
+    return (data ?? []).map((r) => r.shelf_id)
+  },
+
+  /** Define em quais pastas a entrada está (adiciona/remove conforme a lista). */
+  async setBookShelves(userBookId, shelfIds) {
+    const current = await this.shelvesOfBook(userBookId)
+    const toAdd = shelfIds.filter((id) => !current.includes(id))
+    const toRemove = current.filter((id) => !shelfIds.includes(id))
+
+    if (toRemove.length) {
+      const { error } = await supabase
+        .from('user_book_shelves')
+        .delete()
+        .eq('user_book_id', userBookId)
+        .in('shelf_id', toRemove)
+      if (error) throw error
+    }
+    if (toAdd.length) {
+      const rows = toAdd.map((shelf_id) => ({ shelf_id, user_book_id: userBookId }))
+      const { error } = await supabase.from('user_book_shelves').insert(rows)
+      if (error) throw error
+    }
+  },
+
+  /** Persiste a ordem dos livros dentro de uma pasta. */
+  async reorderShelfBooks(shelfId, orderedUserBookIds) {
+    await Promise.all(
+      orderedUserBookIds.map((ubId, i) =>
+        supabase
+          .from('user_book_shelves')
+          .update({ position: i })
+          .eq('shelf_id', shelfId)
+          .eq('user_book_id', ubId),
+      ),
+    )
+  },
+
   /** Catálogo de OBRAS compartilhadas (busca + filtros por autor/gênero/ano). */
   async catalog({ page = 1, pageSize = 24, search = '', authorId = '', genreId = '', year = '' } = {}) {
     const from = (page - 1) * pageSize
