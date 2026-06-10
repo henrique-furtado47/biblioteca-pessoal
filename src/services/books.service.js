@@ -192,9 +192,14 @@ export const booksService = {
   },
 
   async setStatus(id, status) {
-    const { error } = await supabase.from('user_books').update({ status }).eq('id', id)
+    const { data, error } = await supabase
+      .from('user_books')
+      .update({ status })
+      .eq('id', id)
+      .select('id, status, finish_date')
+      .single()
     if (error) throw error
-    return { id, status }
+    return data
   },
 
   /** Livros (entradas de estante) dentro de uma pasta, na ordem definida. */
