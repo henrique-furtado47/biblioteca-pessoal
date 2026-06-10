@@ -51,6 +51,13 @@ watch(selectedBook, (b) => {
   else kind.value = 'status'
 })
 
+// ao compartilhar uma avaliação, traz a legenda já com o texto da avaliação
+watch([selectedBook, kind], ([b, k]) => {
+  if (k === 'review' && b?.notes && !caption.value.trim()) {
+    caption.value = b.notes
+  }
+})
+
 function close() {
   emit('update:modelValue', false)
 }
@@ -72,6 +79,13 @@ async function submit() {
       rating: b && kind.value === 'review' ? b.rating : null,
       status: b && kind.value === 'status' ? b.status : null,
     })
+    // ao publicar uma avaliação: sincroniza o texto de volta e torna pública
+    if (b && kind.value === 'review') {
+      await booksService.updateShelfEntry(b.id, {
+        notes: caption.value.trim() || null,
+        review_public: true,
+      })
+    }
     toast.success('Publicado!')
     caption.value = ''
     selectedId.value = ''
