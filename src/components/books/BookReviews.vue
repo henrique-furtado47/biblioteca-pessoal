@@ -1,12 +1,12 @@
 <script setup>
-import CommentThread from '@/components/social/CommentThread.vue'
+import ReviewCommentThread from '@/components/books/ReviewCommentThread.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import StarRating from '@/components/ui/StarRating.vue'
 import { useToast } from '@/composables/useToast'
 import { booksService } from '@/services/books.service'
 import { friendshipsService } from '@/services/friendships.service'
-import { postsService } from '@/services/posts.service'
 import { profilesService } from '@/services/profiles.service'
+import { reviewsService } from '@/services/reviews.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { initialsOf } from '@/utils/formatters'
 import { onMounted, reactive, ref, watch } from 'vue'
@@ -26,6 +26,7 @@ const loading = ref(false)
 // interações por avaliação (review.id = user_book id)
 const interactions = reactive({})
 const openId = ref(null)
+const likers = reactive({})
 
 onMounted(load)
 watch(() => props.bookId, load)
@@ -51,13 +52,12 @@ async function load() {
     reviews.value = enriched
     emit('count', enriched.length)
 
-    // carrega curtidas/comentários dos posts vinculados às avaliações
-    const map = await postsService.reviewPostsMap(
+    const map = await reviewsService.interactionsMap(
       enriched.map((r) => r.id),
       auth.user.id,
     )
     for (const r of enriched) {
-      interactions[r.id] = map[r.id] || { postId: null, likeCount: 0, liked: false, commentCount: 0 }
+      interactions[r.id] = map[r.id] || { likeCount: 0, liked: false, commentCount: 0 }
     }
   } catch {
     /* avaliações são complementares; silenciar falhas */
@@ -66,22 +66,17 @@ async function load() {
   }
 }
 
-async function ensurePost(reviewId) {
-  const it = interactions[reviewId]
-  if (it.postId) return it.postId
-  it.postId = await postsService.ensureReviewPost(reviewId)
-  return it.postId
-}
-
 async function like(review) {
   const it = interactions[review.id]
   const was = it.liked
   try {
-    const postId = await ensurePost(review.id)
-    if (!postId) return
     it.liked = !was
     it.likeCount += was ? -1 : 1
-    await postsService.toggleLike(postId, auth.user.id, was)
+    await reviewsService.toggleLike(review.id, auth.user.id, was)
+    // atualiza lista de quem curtiu se estiver aberta
+    if (likers[review.id]?.open) {
+      likers[review.id].users = await reviewsService.getLikers(review.id)
+    }
   } catch {
     it.liked = was
     it.likeCount += was ? 1 : -1
@@ -89,20 +84,23 @@ async function like(review) {
   }
 }
 
-async function toggleComments(review) {
-  if (openId.value === review.id) {
-    openId.value = null
-    return
+async function toggleLikers(review) {
+  if (!likers[review.id]) likers[review.id] = { open: false, loading: false, users: [] }
+  const lk = likers[review.id]
+  lk.open = !lk.open
+  if (lk.open && !lk.users.length) {
+    lk.loading = true
+    try { lk.users = await reviewsService.getLikers(review.id) }
+    finally { lk.loading = false }
   }
-  const postId = await ensurePost(review.id)
-  if (!postId) {
-    toast.error('Não foi possível abrir os comentários.')
-    return
-  }
-  openId.value = review.id
+}
+
+function toggleComments(review) {
+  openId.value = openId.value === review.id ? null : review.id
 }
 
 const reviewName = (r) => r.profile?.display_name || r.profile?.username || 'Usuário'
+const lName = (u) => u.display_name || u.username || 'Usuário'
 </script>
 
 <template>
@@ -130,20 +128,52 @@ const reviewName = (r) => r.profile?.display_name || r.profile?.username || 'Usu
         <p v-if="r.notes" class="mt-2 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{{ r.notes }}</p>
 
         <!-- ações da avaliação -->
-        <div class="mt-2 flex items-center gap-4 text-sm">
-          <button class="flex items-center gap-1.5" :class="interactions[r.id]?.liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'" @click="like(r)">
+        <div class="mt-2 flex items-center gap-3 text-sm">
+          <!-- coração -->
+          <button
+            class="flex items-center"
+            :class="interactions[r.id]?.liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'"
+            @click="like(r)"
+          >
             <svg class="h-5 w-5" :class="interactions[r.id]?.liked ? 'fill-rose-500' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+          </button>
+          <!-- contagem clicável para ver quem curtiu -->
+          <button
+            class="text-sm"
+            :class="interactions[r.id]?.likeCount ? 'text-slate-600 hover:underline dark:text-slate-300' : 'text-slate-400'"
+            :disabled="!interactions[r.id]?.likeCount"
+            @click="toggleLikers(r)"
+          >
             {{ interactions[r.id]?.likeCount || 0 }}
           </button>
-          <button class="flex items-center gap-1.5 text-slate-500 hover:text-brand-600" @click="toggleComments(r)">
+          <!-- comentários -->
+          <button class="ml-1 flex items-center gap-1.5 text-slate-500 hover:text-brand-600" @click="toggleComments(r)">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
             {{ interactions[r.id]?.commentCount || 0 }}
           </button>
         </div>
 
+        <!-- quem curtiu -->
+        <div v-if="likers[r.id]?.open" class="mt-2 flex flex-wrap gap-1.5">
+          <span v-if="likers[r.id]?.loading" class="text-xs text-slate-400">Carregando...</span>
+          <template v-else>
+            <span
+              v-for="u in likers[r.id].users"
+              :key="u.id"
+              class="flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800"
+            >
+              <span class="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-[9px] font-semibold text-white">
+                <img v-if="u.avatar_url" :src="u.avatar_url" class="h-full w-full object-cover" />
+                <template v-else>{{ initialsOf(lName(u)) }}</template>
+              </span>
+              {{ lName(u) }}
+            </span>
+          </template>
+        </div>
+
         <!-- comentários -->
         <div v-if="openId === r.id" class="mt-3">
-          <CommentThread :post-id="interactions[r.id].postId" @count="interactions[r.id].commentCount = $event" />
+          <ReviewCommentThread :review-id="r.id" @count="interactions[r.id].commentCount = $event" />
         </div>
       </li>
     </ul>
