@@ -77,6 +77,8 @@ async function toggleFavorite() {
 async function changeStatus(status) {
   const updated = await booksService.setStatus(book.value.id, status)
   book.value.status = updated.status
+  book.value.finish_date = updated.finish_date
+  book.value.start_date = updated.start_date
   toast.success('Status atualizado.')
 }
 

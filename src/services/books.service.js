@@ -192,9 +192,14 @@ export const booksService = {
   },
 
   async setStatus(id, status) {
-    const { error } = await supabase.from('user_books').update({ status }).eq('id', id)
+    const { data, error } = await supabase
+      .from('user_books')
+      .update({ status })
+      .eq('id', id)
+      .select('id, status, finish_date, start_date')
+      .single()
     if (error) throw error
-    return { id, status }
+    return data
   },
 
   /** Livros (entradas de estante) dentro de uma pasta, na ordem definida. */
@@ -380,18 +385,24 @@ export const booksService = {
   },
 
   /** Avaliações públicas de OUTROS usuários para a mesma obra. */
-  async publicReviewsByBookId(bookId, excludeUserId) {
+  async publicReviewsByBookId(bookId, currentUserId) {
     if (!bookId) return []
+    // avaliações públicas dos outros + a minha (mesmo que ainda não pública)
     const { data, error } = await supabase
       .from('user_books')
       .select('id, user_id, rating, notes, finish_date, status')
       .eq('book_id', bookId)
-      .eq('review_public', true)
-      .neq('user_id', excludeUserId)
+      .or(`review_public.eq.true,user_id.eq.${currentUserId}`)
       .not('rating', 'is', null)
       .order('finish_date', { ascending: false, nullsFirst: false })
     if (error) throw error
     return data ?? []
+  },
+
+  /** Atualiza campos da entrada de estante (notes, rating, review_public, etc.). */
+  async updateShelfEntry(userBookId, patch) {
+    const { error } = await supabase.from('user_books').update(patch).eq('id', userBookId)
+    if (error) throw error
   },
 
   /** Anos de publicação distintos na estante do usuário (desc). */

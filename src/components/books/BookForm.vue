@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { useGenresStore } from '@/stores/genres.store'
 import { STATUS_OPTIONS, LANGUAGE_OPTIONS } from '@/constants'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -42,6 +42,17 @@ const form = reactive({
 const authorNameLocal = ref(props.authorName)
 const genreIdsLocal = ref([...props.genreIds])
 const errors = ref({})
+
+// Datas coerentes com o status
+const canStart = computed(() => !['unread', 'wishlist'].includes(form.status))
+const canFinish = computed(() => form.status === 'finished')
+watch(
+  () => form.status,
+  () => {
+    if (!canStart.value) form.start_date = ''
+    if (!canFinish.value) form.finish_date = ''
+  },
+)
 
 const genresStore = useGenresStore()
 onMounted(() => genresStore.fetch())
@@ -176,8 +187,20 @@ function submit() {
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">
-      <BaseInput v-model="form.start_date" label="Início da leitura" type="date" />
-      <BaseInput v-model="form.finish_date" label="Fim da leitura" type="date" />
+      <BaseInput
+        v-model="form.start_date"
+        label="Início da leitura"
+        type="date"
+        :disabled="!canStart"
+        :hint="!canStart ? 'Disponível ao marcar como lendo/lido/abandonado.' : ''"
+      />
+      <BaseInput
+        v-model="form.finish_date"
+        label="Fim da leitura"
+        type="date"
+        :disabled="!canFinish"
+        :hint="!canFinish ? 'Disponível apenas quando o status é “Lido”.' : ''"
+      />
     </div>
 
     <div>
