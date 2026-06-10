@@ -1,15 +1,15 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import CommentThread from '@/components/social/CommentThread.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import StarRating from '@/components/ui/StarRating.vue'
+import { useToast } from '@/composables/useToast'
 import { booksService } from '@/services/books.service'
-import { profilesService } from '@/services/profiles.service'
 import { friendshipsService } from '@/services/friendships.service'
 import { postsService } from '@/services/posts.service'
+import { profilesService } from '@/services/profiles.service'
 import { useAuthStore } from '@/stores/auth.store'
-import { useToast } from '@/composables/useToast'
 import { initialsOf } from '@/utils/formatters'
-import StarRating from '@/components/ui/StarRating.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import CommentThread from '@/components/social/CommentThread.vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
   bookId: { type: String, default: '' },
