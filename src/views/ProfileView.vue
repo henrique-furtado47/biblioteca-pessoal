@@ -5,11 +5,13 @@ import { profilesService } from '@/services/profiles.service'
 import { followsService } from '@/services/follows.service'
 import { friendshipsService } from '@/services/friendships.service'
 import { booksService } from '@/services/books.service'
+import { postsService } from '@/services/posts.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { initialsOf } from '@/utils/formatters'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
+import PostCard from '@/components/social/PostCard.vue'
 import BookGrid from '@/components/books/BookGrid.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Skeleton from '@/components/ui/Skeleton.vue'
@@ -83,12 +85,38 @@ const library = computed(() =>
   books.value.filter((b) => b.status !== 'reading' && b.status !== 'wishlist'),
 )
 
+// Abas do perfil: biblioteca | publicações
+const profileTab = ref('library')
+const posts = ref([])
+const postsLoaded = ref(false)
+const postsLoading = ref(false)
+
+async function selectTab(tab) {
+  profileTab.value = tab
+  if (tab === 'posts' && !postsLoaded.value) {
+    postsLoading.value = true
+    try {
+      posts.value = await postsService.byUser(profile.value.id, auth.user.id)
+      postsLoaded.value = true
+    } finally {
+      postsLoading.value = false
+    }
+  }
+}
+
+function onPostRemoved(id) {
+  posts.value = posts.value.filter((p) => p.id !== id)
+}
+
 onMounted(load)
 watch(() => route.params.username, load)
 
 async function load() {
   loading.value = true
   profile.value = null
+  profileTab.value = 'library'
+  posts.value = []
+  postsLoaded.value = false
   try {
     const p = await profilesService.getByUsername(route.params.username)
     if (!p) {
@@ -245,8 +273,38 @@ const displayName = computed(
         {{ profile.bio }}
       </p>
 
-      <!-- biblioteca -->
-      <div class="mt-8">
+      <!-- abas -->
+      <div class="mt-6 flex gap-1 border-b border-slate-200 dark:border-slate-800">
+        <button
+          class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+          :class="profileTab === 'library' ? 'border-brand-600 text-brand-700 dark:text-brand-300' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+          @click="selectTab('library')"
+        >
+          Biblioteca
+        </button>
+        <button
+          class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition"
+          :class="profileTab === 'posts' ? 'border-brand-600 text-brand-700 dark:text-brand-300' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+          @click="selectTab('posts')"
+        >
+          Publicações
+        </button>
+      </div>
+
+      <!-- aba: publicações -->
+      <div v-show="profileTab === 'posts'" class="mt-6 space-y-4">
+        <p v-if="postsLoading" class="text-sm text-slate-400">Carregando...</p>
+        <PostCard v-for="post in posts" :key="post.id" :post="post" @removed="onPostRemoved" />
+        <EmptyState
+          v-if="!postsLoading && !posts.length"
+          icon="users"
+          title="Nenhuma publicação"
+          message="As publicações desta pessoa aparecem aqui."
+        />
+      </div>
+
+      <!-- aba: biblioteca -->
+      <div v-show="profileTab === 'library'" class="mt-6">
         <template v-if="canSeeLibrary">
           <!-- carregando -->
           <BookGrid v-if="booksLoading" :books="[]" loading :readonly="!isMe" />
