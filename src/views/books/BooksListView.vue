@@ -18,6 +18,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
 
 const GRID = 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'
 
@@ -129,6 +130,43 @@ function persistChipOrder() {
 }
 
 const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf.value)
+
+// --- Modal "adicionar a pasta" (alternativa ao arrastar, ideal no mobile) ---
+const folderModalOpen = ref(false)
+const modalBook = ref(null)
+const modalShelfIds = ref([])
+const modalLoading = ref(false)
+
+async function openFolderModal(book) {
+  modalBook.value = book
+  folderModalOpen.value = true
+  modalLoading.value = true
+  try {
+    modalShelfIds.value = await booksService.shelvesOfBook(book.id)
+  } finally {
+    modalLoading.value = false
+  }
+}
+
+async function toggleModalShelf(shelfId) {
+  const set = new Set(modalShelfIds.value)
+  set.has(shelfId) ? set.delete(shelfId) : set.add(shelfId)
+  const ids = [...set]
+  try {
+    await booksService.setBookShelves(modalBook.value.id, ids)
+    modalShelfIds.value = ids
+    if (selectedShelf.value) selectShelf(selectedShelf.value)
+  } catch {
+    toast.error('Não foi possível atualizar as pastas.')
+  }
+}
+
+async function newFolderInModal() {
+  const name = window.prompt('Nome da nova pasta')
+  if (!name || !name.trim()) return
+  const shelf = await shelvesStore.create(name)
+  toggleModalShelf(shelf.id)
+}
 </script>
 
 <template>
@@ -217,11 +255,22 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
         :list="items"
         :group="{ name: 'books', pull: 'clone', put: false }"
         :sort="false"
+        handle=".drag-handle"
         item-key="id"
         :class="GRID"
       >
         <template #item="{ element }">
-          <div><BookCard :book="element" @toggle-favorite="onToggleFavorite" /></div>
+          <div class="relative">
+            <div class="absolute left-1.5 top-1.5 z-10 flex gap-1">
+              <span class="drag-handle flex cursor-move touch-none items-center rounded-md bg-slate-900/55 p-1 text-white" title="Arraste para uma pasta">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+              </span>
+              <button class="flex items-center rounded-md bg-slate-900/55 p-1 text-white" title="Adicionar a pasta" @click.stop.prevent="openFolderModal(element)">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+            </div>
+            <BookCard :book="element" @toggle-favorite="onToggleFavorite" />
+          </div>
         </template>
       </draggable>
 
@@ -252,12 +301,23 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
         v-else-if="shelfItems.length"
         v-model="shelfItems"
         item-key="id"
+        handle=".drag-handle"
         :animation="150"
         :class="GRID"
         @end="persistShelfBooks"
       >
         <template #item="{ element }">
-          <div><BookCard :book="element" @toggle-favorite="onToggleFavorite" /></div>
+          <div class="relative">
+            <div class="absolute left-1.5 top-1.5 z-10 flex gap-1">
+              <span class="drag-handle flex cursor-move touch-none items-center rounded-md bg-slate-900/55 p-1 text-white" title="Arraste para reordenar">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+              </span>
+              <button class="flex items-center rounded-md bg-slate-900/55 p-1 text-white" title="Adicionar a pasta" @click.stop.prevent="openFolderModal(element)">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+            </div>
+            <BookCard :book="element" @toggle-favorite="onToggleFavorite" />
+          </div>
         </template>
       </draggable>
       <EmptyState
@@ -267,5 +327,36 @@ const currentShelf = () => shelvesStore.items.find((s) => s.id === selectedShelf
         message="Arraste livros até esta pasta (na visão Todos) ou use o botão Pastas na página do livro."
       />
     </template>
+
+    <!-- modal: adicionar livro a pasta (sem arrastar) -->
+    <BaseModal v-model="folderModalOpen" :title="modalBook ? `Pastas de “${modalBook.title}”` : 'Pastas'">
+      <p v-if="modalLoading" class="text-sm text-slate-400">Carregando...</p>
+      <template v-else>
+        <p class="mb-3 text-sm text-slate-500 dark:text-slate-400">Toque para incluir ou remover o livro de uma pasta.</p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="shelf in shelvesStore.items"
+            :key="shelf.id"
+            type="button"
+            class="rounded-full border px-3 py-1.5 text-sm font-medium transition"
+            :class="
+              modalShelfIds.includes(shelf.id)
+                ? 'border-brand-600 bg-brand-600 text-white'
+                : 'border-slate-300 text-slate-600 hover:border-brand-400 dark:border-slate-700 dark:text-slate-300'
+            "
+            @click="toggleModalShelf(shelf.id)"
+          >
+            {{ shelf.name }}
+          </button>
+          <button
+            type="button"
+            class="rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 hover:border-brand-400 hover:text-brand-600 dark:border-slate-700"
+            @click="newFolderInModal"
+          >
+            + Nova pasta
+          </button>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
