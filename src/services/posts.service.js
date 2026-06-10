@@ -144,15 +144,6 @@ export const postsService = {
     return map
   },
 
-  /** Garante o post vinculado a uma avaliação pública e retorna o id. */
-  async ensureReviewPost(userBookId) {
-    const { data, error } = await supabase.rpc('ensure_review_post', {
-      p_user_book_id: userBookId,
-    })
-    if (error) throw error
-    return data
-  },
-
   async listComments(postId, meId) {
     const { data, error } = await supabase
       .from('post_comments')
