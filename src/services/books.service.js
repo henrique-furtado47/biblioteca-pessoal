@@ -196,7 +196,7 @@ export const booksService = {
       .from('user_books')
       .update({ status })
       .eq('id', id)
-      .select('id, status, finish_date')
+      .select('id, status, finish_date, start_date')
       .single()
     if (error) throw error
     return data
