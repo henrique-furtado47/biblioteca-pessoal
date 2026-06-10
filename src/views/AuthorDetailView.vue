@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { authorsService } from '@/services/authors.service'
 import { booksService } from '@/services/books.service'
 import { useAuthorsStore } from '@/stores/authors.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { initialsOf, pluralize } from '@/utils/formatters'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -17,7 +16,6 @@ import AuthorForm from '@/components/authors/AuthorForm.vue'
 const route = useRoute()
 const router = useRouter()
 const authorsStore = useAuthorsStore()
-const auth = useAuthStore()
 const toast = useToast()
 
 const author = ref(null)
@@ -46,11 +44,9 @@ async function load() {
 async function loadBooks() {
   booksLoading.value = true
   try {
-    const { items } = await booksService.list({
-      userId: auth.user.id,
+    const { items } = await booksService.catalog({
       authorId: route.params.id,
       pageSize: 100,
-      sort: 'title_asc',
     })
     books.value = items
   } finally {
@@ -70,12 +66,6 @@ async function handleSubmit(payload) {
   } finally {
     submitting.value = false
   }
-}
-
-async function onToggleFavorite(book) {
-  const updated = await booksService.setFavorite(book.id, !book.favorite)
-  const idx = books.value.findIndex((b) => b.id === book.id)
-  if (idx !== -1) books.value[idx] = { ...books.value[idx], favorite: updated.favorite }
 }
 </script>
 
@@ -106,7 +96,7 @@ async function onToggleFavorite(book) {
           <div>
             <h1 class="text-3xl font-bold leading-tight">{{ author.name }}</h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {{ pluralize(books.length, 'livro na sua biblioteca', 'livros na sua biblioteca') }}
+              {{ pluralize(books.length, 'livro no catálogo', 'livros no catálogo') }}
             </p>
           </div>
         </div>
@@ -129,13 +119,14 @@ async function onToggleFavorite(book) {
           v-if="booksLoading || books.length"
           :books="books"
           :loading="booksLoading"
-          @toggle-favorite="onToggleFavorite"
+          readonly
+          book-page
         />
         <EmptyState
           v-else
           icon="book"
           title="Nenhum livro deste autor"
-          message="Os livros aparecem aqui quando você associa este autor a um livro."
+          message="Ainda não há livros deste autor no catálogo."
         />
       </div>
     </template>
