@@ -52,7 +52,8 @@ const detailTo = computed(() =>
         {{ book.author?.name || 'Autor desconhecido' }}
       </p>
       <div class="mt-auto pt-2">
-        <template v-if="bookPage">
+        <!-- catálogo: média de avaliações públicas -->
+        <template v-if="book.ratings_count !== undefined">
           <div v-if="book.ratings_count" class="flex items-center gap-1 text-xs">
             <svg class="h-4 w-4 fill-amber-400 text-amber-400" viewBox="0 0 24 24"><path d="M11.48 3.5a.56.56 0 011.04 0l2.13 4.32 4.77.69c.46.07.64.63.31.95l-3.45 3.36.81 4.75c.08.46-.4.81-.81.59L12 16.3l-4.27 2.24c-.41.22-.89-.13-.81-.59l.81-4.75-3.45-3.36a.56.56 0 01.31-.95l4.77-.69L11.48 3.5z"/></svg>
             <span class="font-semibold">{{ Number(book.avg_rating).toFixed(1) }}</span>
@@ -60,6 +61,7 @@ const detailTo = computed(() =>
           </div>
           <span v-else class="text-xs text-slate-400">Sem avaliações</span>
         </template>
+        <!-- estante/perfil: a nota que a pessoa deu -->
         <StarRating v-else-if="book.rating" :model-value="Number(book.rating)" readonly size="sm" />
       </div>
     </div>
