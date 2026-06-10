@@ -240,6 +240,14 @@ export const booksService = {
     }
   },
 
+  /** Adiciona uma entrada de estante a uma pasta (ignora se já estiver). */
+  async addBookToShelf(userBookId, shelfId) {
+    const { error } = await supabase
+      .from('user_book_shelves')
+      .insert({ shelf_id: shelfId, user_book_id: userBookId })
+    if (error && error.code !== '23505') throw error
+  },
+
   /** Persiste a ordem dos livros dentro de uma pasta. */
   async reorderShelfBooks(shelfId, orderedUserBookIds) {
     await Promise.all(
