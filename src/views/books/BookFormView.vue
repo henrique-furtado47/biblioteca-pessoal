@@ -118,7 +118,7 @@ async function handleSubmit({ payload, authorName: name, genreIds: selectedGenre
   <div class="mx-auto max-w-4xl space-y-5">
     <div class="flex items-center gap-3">
       <button class="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800" @click="router.back()">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        <font-awesome-icon :icon="['fas', 'arrow-left']" class="h-5 w-5" />
       </button>
       <h1 class="text-2xl font-bold">{{ isEdit ? 'Editar livro' : 'Adicionar livro' }}</h1>
     </div>
