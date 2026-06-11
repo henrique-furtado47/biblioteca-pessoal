@@ -22,13 +22,13 @@ const styles = {
         :class="styles[t.type]"
       >
         <span class="mt-0.5 shrink-0">
-          <svg v-if="t.type === 'success'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          <svg v-else-if="t.type === 'error'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1.5 1.5 0 003.1 21h17.8a1.5 1.5 0 001.29-2.44l-8.48-14.7a1.5 1.5 0 00-2.6 0z"/></svg>
-          <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <font-awesome-icon v-if="t.type === 'success'" :icon="['fas', 'check']" class="h-5 w-5" />
+          <font-awesome-icon v-else-if="t.type === 'error'" :icon="['fas', 'triangle-exclamation']" class="h-5 w-5" />
+          <font-awesome-icon v-else :icon="['fas', 'circle-info']" class="h-5 w-5" />
         </span>
         <p class="flex-1 leading-snug">{{ t.message }}</p>
         <button class="shrink-0 opacity-60 hover:opacity-100" @click="ui.dismissToast(t.id)">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          <font-awesome-icon :icon="['fas', 'xmark']" class="h-4 w-4" />
         </button>
       </div>
     </transition-group>
