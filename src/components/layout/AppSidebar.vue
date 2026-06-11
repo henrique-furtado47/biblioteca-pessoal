@@ -20,30 +20,17 @@ const myProfileTo = computed(() =>
 )
 
 const nav = [
-  { to: { name: 'dashboard' }, label: 'Dashboard', icon: 'grid' },
-  { to: { name: 'feed' }, label: 'Feed', icon: 'feed' },
-  { to: { name: 'catalog' }, label: 'Livros', icon: 'book' },
-  { to: { name: 'books' }, label: 'Meus Livros', icon: 'shelf' },
-  { to: { name: 'authors' }, label: 'Autores', icon: 'users' },
-  { to: { name: 'wishlist' }, label: 'Lista de Desejos', icon: 'gift' },
-  { to: { name: 'favorites' }, label: 'Favoritos', icon: 'heart' },
-  { to: { name: 'statistics' }, label: 'Estatísticas', icon: 'chart' },
-  { to: { name: 'community' }, label: 'Comunidade', icon: 'users' },
-  { to: { name: 'settings' }, label: 'Configurações', icon: 'cog' },
+  { to: { name: 'dashboard' }, label: 'Dashboard',       faIcon: ['fas', 'table-cells-large'] },
+  { to: { name: 'feed' },      label: 'Feed',             faIcon: ['fas', 'rss'] },
+  { to: { name: 'catalog' },   label: 'Livros',           faIcon: ['fas', 'book'] },
+  { to: { name: 'books' },     label: 'Meus Livros',      faIcon: ['fas', 'book-open'] },
+  { to: { name: 'authors' },   label: 'Autores',          faIcon: ['fas', 'user-pen'] },
+  { to: { name: 'wishlist' },  label: 'Lista de Desejos', faIcon: ['fas', 'gift'] },
+  { to: { name: 'favorites' }, label: 'Favoritos',        faIcon: ['fas', 'heart'] },
+  { to: { name: 'statistics' },label: 'Estatísticas',     faIcon: ['fas', 'chart-bar'] },
+  { to: { name: 'community' }, label: 'Comunidade',       faIcon: ['fas', 'people-group'] },
+  { to: { name: 'settings' },  label: 'Configurações',    faIcon: ['fas', 'gear'] },
 ]
-
-const icons = {
-  grid: 'M4 5h6v6H4V5zm10 0h6v6h-6V5zM4 15h6v4H4v-4zm10 0h6v4h-6v-4z',
-  book: 'M12 6.5C10.5 5.5 8.5 5 6.5 5H4v12.5h2.5c2 0 4 .5 5.5 1.5m0-12.5c1.5-1 3.5-1.5 5.5-1.5H20V17.5h-2.5c-2 0-4 .5-5.5 1.5m0-12.5V19',
-  users: 'M17 20h5v-1a4 4 0 00-4-4h-1m-6 5H2v-1a4 4 0 014-4h4m1-4a4 4 0 100-8 4 4 0 000 8z',
-  gift: 'M21 11.5V21H3v-9.5M1 7h22v4.5H1V7zm11 0v14M12 7S10 2.5 7 3.5 9 7 12 7zm0 0s2-4.5 5-3.5-1 3.5-5 3.5z',
-  heart: 'M21 8.25c0-2.5-2-4.25-4.2-4.25-1.6 0-3 .9-3.8 2.3C12.2 4.9 10.8 4 9.2 4 7 4 5 5.75 5 8.25c0 4.4 7 9.75 7 9.75s7-5.35 7-9.75z',
-  chart: 'M4 19V5m6 14V9m6 10V13m-12 6h16',
-  cog: 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 00-1.7-1l-.4-2.5h-3.8L9.6 4a7 7 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7 7 0 001.7 1l.4 2.5h3.8l.4-2.5a7 7 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z',
-  user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z',
-  shelf: 'M4 5h16M4 5v14M4 19h16M20 5v14M8 5v14m4-14v14',
-  feed: 'M4 11a9 9 0 019 9M4 4a16 16 0 0116 16M6 19a1 1 0 11-2 0 1 1 0 012 0z',
-}
 </script>
 
 <template>
@@ -72,9 +59,7 @@ const icons = {
         active-class="!bg-brand-50 !text-brand-700 dark:!bg-brand-900/30 dark:!text-brand-200"
         @click="$emit('close')"
       >
-        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" :d="icons[item.icon]" />
-        </svg>
+        <font-awesome-icon :icon="item.faIcon" class="h-5 w-5 shrink-0" />
         {{ item.label }}
       </RouterLink>
 
@@ -84,9 +69,7 @@ const icons = {
         active-class="!bg-brand-50 !text-brand-700 dark:!bg-brand-900/30 dark:!text-brand-200"
         @click="$emit('close')"
       >
-        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" :d="icons.user" />
-        </svg>
+        <font-awesome-icon :icon="['fas', 'user']" class="h-5 w-5 shrink-0" />
         Meu Perfil
       </RouterLink>
     </nav>
