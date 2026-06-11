@@ -52,9 +52,7 @@ watch(
             class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
             @click="close"
           >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <font-awesome-icon :icon="['fas', 'xmark']" class="h-5 w-5" />
           </button>
         </div>
         <div class="max-h-[75vh] overflow-y-auto p-5">
