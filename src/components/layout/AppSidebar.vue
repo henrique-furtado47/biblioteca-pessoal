@@ -46,7 +46,7 @@ const nav = [
     :class="open ? 'translate-x-0' : '-translate-x-full'"
   >
     <div class="flex h-16 items-center gap-2 px-5 text-lg font-bold text-brand-600">
-      <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5C10.5 5.5 8.5 5 6.5 5H4v12.5h2.5c2 0 4 .5 5.5 1.5m0-12.5c1.5-1 3.5-1.5 5.5-1.5H20V17.5h-2.5c-2 0-4 .5-5.5 1.5m0-12.5V19"/></svg>
+      <font-awesome-icon :icon="['fas', 'book']" class="h-7 w-7" />
       Biblioteca
     </div>
 
@@ -85,11 +85,7 @@ const nav = [
           aria-label="Instagram"
           class="inline-flex items-center gap-1 transition hover:text-brand-600 dark:hover:text-brand-400"
         >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-            <rect x="3" y="3" width="18" height="18" rx="5" ry="5" stroke-linecap="round" stroke-linejoin="round" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 6.5h.01" />
-          </svg>
+          <font-awesome-icon :icon="['fab', 'instagram']" class="h-4 w-4" />
           Instagram
         </a>
         <a
@@ -99,9 +95,7 @@ const nav = [
           aria-label="GitHub"
           class="inline-flex items-center gap-1 transition hover:text-brand-600 dark:hover:text-brand-400"
         >
-          <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.02 3.24 9.27 7.74 10.77.57.1.78-.25.78-.55 0-.27-.01-1-.02-1.96-3.15.68-3.81-1.52-3.81-1.52-.51-1.31-1.26-1.66-1.26-1.66-1.03-.7.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.01 1.74 2.66 1.24 3.31.95.1-.74.4-1.24.72-1.52-2.51-.29-5.16-1.26-5.16-5.6 0-1.24.44-2.25 1.17-3.05-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.17.91-.25 1.89-.38 2.86-.39.97.01 1.95.14 2.86.39 2.18-1.48 3.14-1.17 3.14-1.17.62 1.57.23 2.73.11 3.02.73.8 1.17 1.81 1.17 3.05 0 4.35-2.66 5.31-5.18 5.59.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .3.21.66.79.55 4.49-1.5 7.73-5.75 7.73-10.77C23.33 5.56 18.27.5 12 .5z" />
-          </svg>
+          <font-awesome-icon :icon="['fab', 'github']" class="h-4 w-4" />
           GitHub
         </a>
       </div>
