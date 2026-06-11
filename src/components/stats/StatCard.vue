@@ -14,20 +14,20 @@ const accents = {
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
 }
 
-const icons = {
-  book: 'M12 6.5C10.5 5.5 8.5 5 6.5 5H4v12.5h2.5c2 0 4 .5 5.5 1.5m0-12.5c1.5-1 3.5-1.5 5.5-1.5H20V17.5h-2.5c-2 0-4 .5-5.5 1.5m0-12.5V19',
-  check: 'M5 13l4 4L19 7',
-  reading: 'M3 5h18M3 12h18M3 19h12',
-  x: 'M6 18L18 6M6 6l12 12',
-  gift: 'M21 11.5V21H3v-9.5M1 7h22v4.5H1V7zm11 0v14',
-  star: 'M11.48 3.5a.56.56 0 011.04 0l2.13 4.32 4.77.69c.46.07.64.63.31.95l-3.45 3.36.81 4.75c.08.46-.4.81-.81.59L12 16.3l-4.27 2.24c-.41.22-.89-.13-.81-.59l.81-4.75-3.45-3.36a.56.56 0 01.31-.95l4.77-.69L11.48 3.5z',
+const faIcons = {
+  book:    ['fas', 'book'],
+  check:   ['fas', 'check'],
+  reading: ['fas', 'list'],
+  x:       ['fas', 'xmark'],
+  gift:    ['fas', 'gift'],
+  star:    ['fas', 'star'],
 }
 </script>
 
 <template>
   <div class="card flex items-center gap-4 p-5">
     <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" :class="accents[accent]">
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" :d="icons[icon]" /></svg>
+      <font-awesome-icon :icon="faIcons[icon] || ['fas', 'book']" class="h-6 w-6" />
     </div>
     <div>
       <p class="text-2xl font-bold">{{ value }}</p>
