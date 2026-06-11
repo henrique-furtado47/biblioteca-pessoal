@@ -135,7 +135,7 @@ const lName = (u) => u.display_name || u.username || 'Usuário'
             :class="interactions[r.id]?.liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-500'"
             @click="like(r)"
           >
-            <svg class="h-5 w-5" :class="interactions[r.id]?.liked ? 'fill-rose-500' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            <font-awesome-icon :icon="['fas', 'heart']" class="h-5 w-5" />
           </button>
           <!-- contagem clicável para ver quem curtiu -->
           <button
@@ -148,7 +148,7 @@ const lName = (u) => u.display_name || u.username || 'Usuário'
           </button>
           <!-- comentários -->
           <button class="ml-1 flex items-center gap-1.5 text-slate-500 hover:text-brand-600" @click="toggleComments(r)">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <font-awesome-icon :icon="['far', 'comment']" class="h-5 w-5" />
             {{ interactions[r.id]?.commentCount || 0 }}
           </button>
         </div>
