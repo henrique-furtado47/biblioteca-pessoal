@@ -177,7 +177,7 @@ async function newFolderInModal() {
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ count }} livro(s) na coleção</p>
       </div>
       <BaseButton @click="router.push({ name: 'book-new' })">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <font-awesome-icon :icon="['fas', 'plus']" class="h-5 w-5" />
         Adicionar livro
       </BaseButton>
     </div>
@@ -263,10 +263,10 @@ async function newFolderInModal() {
           <div class="relative">
             <div class="absolute left-1.5 top-1.5 z-10 flex gap-1">
               <span class="drag-handle flex cursor-move touch-none items-center rounded-md bg-slate-900/55 p-1 text-white" title="Arraste para uma pasta">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                <font-awesome-icon :icon="['fas', 'grip']" class="h-4 w-4" />
               </span>
               <button class="flex items-center rounded-md bg-slate-900/55 p-1 text-white" title="Adicionar a pasta" @click.stop.prevent="openFolderModal(element)">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                <font-awesome-icon :icon="['fas', 'ellipsis-vertical']" class="h-4 w-4" />
               </button>
             </div>
             <BookCard :book="element" @toggle-favorite="onToggleFavorite" />
@@ -310,10 +310,10 @@ async function newFolderInModal() {
           <div class="relative">
             <div class="absolute left-1.5 top-1.5 z-10 flex gap-1">
               <span class="drag-handle flex cursor-move touch-none items-center rounded-md bg-slate-900/55 p-1 text-white" title="Arraste para reordenar">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                <font-awesome-icon :icon="['fas', 'grip']" class="h-4 w-4" />
               </span>
               <button class="flex items-center rounded-md bg-slate-900/55 p-1 text-white" title="Adicionar a pasta" @click.stop.prevent="openFolderModal(element)">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                <font-awesome-icon :icon="['fas', 'ellipsis-vertical']" class="h-4 w-4" />
               </button>
             </div>
             <BookCard :book="element" @toggle-favorite="onToggleFavorite" />
