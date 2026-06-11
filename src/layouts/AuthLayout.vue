@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle.vue'
     <!-- Painel ilustrativo (desktop) -->
     <div class="relative hidden w-1/2 flex-col justify-between bg-brand-600 p-12 text-white lg:flex">
       <div class="flex items-center gap-2 text-lg font-bold">
-        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5C10.5 5.5 8.5 5 6.5 5H4v12.5h2.5c2 0 4 .5 5.5 1.5m0-12.5c1.5-1 3.5-1.5 5.5-1.5H20V17.5h-2.5c-2 0-4 .5-5.5 1.5m0-12.5V19"/></svg>
+        <font-awesome-icon :icon="['fas', 'book']" class="h-7 w-7" />
         Minha Biblioteca
       </div>
       <div>
