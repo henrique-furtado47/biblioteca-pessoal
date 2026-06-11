@@ -74,7 +74,7 @@ const visLabel = () =>
         <p class="text-xs text-slate-400">{{ formatDateTime(post.created_at) }} · {{ visLabel() }}</p>
       </div>
       <button v-if="isOwner()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="Excluir" @click="removePost">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5h6v2m-1 0v12m-4-12v12M5 7l1 13h12l1-13"/></svg>
+        <font-awesome-icon :icon="['fas', 'trash']" class="h-4 w-4" />
       </button>
     </div>
 
@@ -85,7 +85,7 @@ const visLabel = () =>
         <img v-if="post.book.cover_url" :src="post.book.cover_url" alt="" aria-hidden="true" class="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-xl" />
         <img v-if="post.book.cover_url" :src="post.book.cover_url" :alt="post.book.title" class="relative z-10 max-h-[26rem] w-auto object-contain py-2" />
         <div v-else class="flex h-72 w-full items-center justify-center text-slate-600">
-          <svg class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5C10.5 5.5 8.5 5 6.5 5H4v12.5h2.5c2 0 4 .5 5.5 1.5m0-12.5c1.5-1 3.5-1.5 5.5-1.5H20V17.5h-2.5c-2 0-4 .5-5.5 1.5m0-12.5V19"/></svg>
+          <font-awesome-icon :icon="['fas', 'book']" class="h-20 w-20" />
         </div>
       </div>
     </RouterLink>
@@ -94,10 +94,10 @@ const visLabel = () =>
       <!-- ações -->
       <div class="flex items-center gap-4">
         <button class="flex items-center text-sm" :class="liked ? 'text-rose-500' : 'text-slate-600 hover:text-rose-500 dark:text-slate-300'" @click="toggleLike">
-          <svg class="h-6 w-6" :class="liked ? 'fill-rose-500' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+          <font-awesome-icon :icon="['fas', 'heart']" class="h-6 w-6" />
         </button>
         <button class="flex items-center text-slate-600 hover:text-brand-600 dark:text-slate-300" @click="toggleComments">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          <font-awesome-icon :icon="['far', 'comment']" class="h-6 w-6" />
         </button>
       </div>
 
