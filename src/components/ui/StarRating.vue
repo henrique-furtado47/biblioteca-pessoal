@@ -55,27 +55,10 @@ function onHover(i, isHalf) {
         @mouseenter="onHover(i, false)"
         @click="pick(i, false)"
       />
-      <svg :class="sizeClass[size]" viewBox="0 0 24 24">
-        <defs>
-          <linearGradient :id="`half-${i}`">
-            <stop offset="50%" stop-color="#f59e0b" />
-            <stop offset="50%" stop-color="transparent" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"
-          :fill="
-            fillFor(i) === 'full'
-              ? '#f59e0b'
-              : fillFor(i) === 'half'
-              ? `url(#half-${i})`
-              : 'transparent'
-          "
-          stroke="#f59e0b"
-          stroke-width="1.2"
-          stroke-linejoin="round"
-        />
-      </svg>
+      <font-awesome-icon
+        :icon="fillFor(i) === 'full' ? ['fas', 'star'] : fillFor(i) === 'half' ? ['fas', 'star-half-stroke'] : ['far', 'star']"
+        :class="[sizeClass[size], 'text-amber-400']"
+      />
     </span>
     <span v-if="modelValue" class="ml-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
       {{ modelValue.toFixed(1) }}
