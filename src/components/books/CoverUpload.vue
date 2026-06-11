@@ -50,7 +50,7 @@ function clear() {
       <div class="relative h-40 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
         <img v-if="modelValue" :src="modelValue" alt="Capa" class="h-full w-full object-cover" />
         <div v-else class="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
-          <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 5h16v14H4V5z"/></svg>
+          <font-awesome-icon :icon="['fas', 'image']" class="h-10 w-10" />
         </div>
       </div>
 
