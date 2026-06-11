@@ -1,18 +1,28 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import { createPinia } from "pinia";
+import { createApp } from "vue";
 
-import App from './App.vue'
-import router from './router'
-import { useThemeStore } from './stores/ui.store'
-import './assets/css/main.css'
+import App from "./App.vue";
+import "./assets/css/main.css";
+import router from "./router";
+import { useThemeStore } from "./stores/ui.store";
 
-const app = createApp(App)
-const pinia = createPinia()
+// Font Awesome
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { fab } from "@fortawesome/free-brands-svg-icons";
+import { far } from "@fortawesome/free-regular-svg-icons";
+import { fas } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
-app.use(pinia)
-app.use(router)
+library.add(fas, far, fab);
+
+const app = createApp(App);
+const pinia = createPinia();
+
+app.use(pinia);
+app.use(router);
+app.component("font-awesome-icon", FontAwesomeIcon);
 
 // Aplica o tema salvo antes da primeira renderização
-useThemeStore().init()
+useThemeStore().init();
 
-app.mount('#app')
+app.mount("#app");
