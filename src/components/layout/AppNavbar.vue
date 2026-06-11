@@ -44,7 +44,7 @@ async function logout() {
       class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
       @click="$emit('toggle-sidebar')"
     >
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <font-awesome-icon :icon="['fas', 'bars']" class="h-6 w-6" />
     </button>
 
     <div class="ml-auto flex items-center gap-1.5">
