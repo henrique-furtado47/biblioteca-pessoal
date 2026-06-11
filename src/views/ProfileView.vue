@@ -343,7 +343,7 @@ const displayName = computed(
           v-else
           class="card flex flex-col items-center gap-2 p-10 text-center text-sm text-slate-500 dark:text-slate-400"
         >
-          <svg class="h-10 w-10 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <font-awesome-icon :icon="['fas', 'lock']" class="h-10 w-10 text-slate-300 dark:text-slate-600" />
           {{ visibilityMessage }}
         </div>
       </div>
