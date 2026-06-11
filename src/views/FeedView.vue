@@ -56,7 +56,7 @@ function onRemoved(id) {
         <p class="text-sm text-slate-500 dark:text-slate-400">Publicações de quem você segue e seus amigos.</p>
       </div>
       <BaseButton @click="createOpen = true">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <font-awesome-icon :icon="['fas', 'plus']" class="h-5 w-5" />
         Publicar
       </BaseButton>
     </div>
